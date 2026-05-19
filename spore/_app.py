@@ -11,6 +11,7 @@ from spore._logger import logging
 
 import redis
 import sys
+import os
 
 socketio = SocketIO(cors_allowed_origins=ALLOWED_ORIGINS, async_mode='threading')
 
@@ -18,9 +19,13 @@ def create_app() -> Flask:
     """Creates Spore lol"""
     try:
         logging.info("Initializing Spore")
-        app = Flask(__name__)
+        static_path = os.path.join(os.path.dirname(__file__), '..', 'frontend', 'src', 'templates', 'pages', 'static')
+        
+        app = Flask(__name__, 
+                    static_folder=static_path, 
+                    static_url_path='/static')
         app.secret_key = settings.SECRET_KEY
-
+    
         configure_extensions(app)
         register_blueprints(app)
         register_sockets(app)
@@ -54,10 +59,12 @@ def register_blueprints(app: Flask) -> None:
     from spore._routes.interface import interface_blueprint
     from spore._routes.connections import connections_blueprint
     from spore._routes.workspace import workspace_blueprint
+    from spore._routes.settings import settings_blueprint
 
     app.register_blueprint(interface_blueprint, name='interface')
     app.register_blueprint(connections_blueprint, name='connections')
     app.register_blueprint(workspace_blueprint, name='workspace')
+    app.register_blueprint(settings_blueprint, name='settings')
 
 def register_sockets(app: Flask) -> None:
     """Register Spore SocketIO (WebSockets) Events"""

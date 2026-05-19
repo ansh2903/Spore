@@ -29,11 +29,9 @@ def encrypt_creds(creds):
 
 def decrypt_creds(encrypted_creds):
     try:
-        print('bisnboshbubsrh')
         cipher = _get_cipher()
         decrypted_bytes = cipher.decrypt(encrypted_creds.encode())
         decrypted_str = decrypted_bytes.decode()
-        print(f"Decrypted string: {decrypted_str}")
         return ast.literal_eval(decrypted_str)
     except Exception as e:
         logging.error(f"Decryption failed specifically at: {repr(e)}")
@@ -140,8 +138,13 @@ def downloadable_json(raw_data):
     )
 
 def SETTINGS_FILE():
-    p = Path(__file__).parents[1] / "config" / "settings.json"
-    return p
+    """LLM runtime settings JSON (provider, model, options)."""
+    repo_root = Path(__file__).parents[1]
+    primary = repo_root / "spore" / "_config" / "settings.json"
+    legacy = repo_root / "config" / "settings.json"
+    if primary.exists():
+        return primary
+    return legacy
 
 def load_settings():
     logging.info("inside load_settings()")

@@ -2,7 +2,11 @@ FROM continuumio/miniconda3
 
 WORKDIR /app
 
-COPY . .
+COPY requirements.txt .
+COPY setup.py .
+COPY spore ./spore
+COPY frontend ./frontend
+COPY data ./data
 
 RUN apt-get update && apt-get install -y \
     unixodbc \
@@ -24,4 +28,4 @@ ENV FLASK_ENV=development
 
 EXPOSE 5000
 
-CMD ["conda", "run", "--no-capture-output", "-n", "scalable", "python", "-m", "src.app"]
+CMD ["conda", "run", "--no-capture-output", "-n", "scalable", "python", "-m", "spore._app"]

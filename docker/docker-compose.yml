@@ -1,6 +1,8 @@
 services:
   scalable:
-    build: .
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
     container_name: flask
     ports:
       - "5000:5000"
@@ -14,8 +16,11 @@ services:
       - FLASK_ENV=development
       - REDIS_HOST=keydb
       - REDIS_PORT=6379
+      - SPORE_DATA_DIR=/app/data
+      - KERNEL_DATA_MOUNT=/data
     volumes:
-      - .:/app
+      - ..:/app
+      - spore_data:/data
 
   keydb:
     image: eqalpha/keydb:latest
@@ -23,3 +28,6 @@ services:
     ports:
       - "6379:6379"
     restart: always
+
+volumes:
+  spore_data:

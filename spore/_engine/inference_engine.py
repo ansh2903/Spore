@@ -127,6 +127,8 @@ class InferenceEngine:
         2. <query>: Valid, executable {db_type} query string. If no query is needed, leave this tag empty: <query></query>.
         3. <comment>: Markdown-formatted explanation or friendly reply.
         4. Do NOT include any text outside these tags.
+        5. Push all filters, joins, aggregations, and sampling into SQL (WHERE, GROUP BY, TABLESAMPLE, LIMIT).
+        6. Never suggest pandas, pd.read_sql, or pulling full tables into Python — SQL runs on the remote source.
 
         EXAMPLES:
         User: "hello"

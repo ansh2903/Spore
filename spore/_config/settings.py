@@ -17,26 +17,179 @@ class Settings:
     REDIS_HOST = os.getenv("REDIS_HOST", "127.0.0.1")
     REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
     REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", None)
+    # Host path where materialized Parquet lands (Flask / ingest)
+    SPORE_DATA_DIR = os.getenv("SPORE_DATA_DIR", os.path.join(os.getcwd(), "data"))
+    # Path visible inside the sandboxed Jupyter kernel container
+    KERNEL_DATA_MOUNT = os.getenv("KERNEL_DATA_MOUNT", "/data")
     
 settings = Settings()
 
 raw_origins = os.getenv("ALLOWED_ORIGINS", "http://127.0.0.1:5000,http://localhost:5000")
 ALLOWED_ORIGINS = [origin.strip() for origin in raw_origins.split(",")]
 
-# Connector-specific configurations and utilities
-VENDOR_CONFIG = {
-    "postgresql": {"default_port": 5432,  "connection_type": "standard", "has_schema": True,  "schema_default": "public"},
-    "mysql":      {"default_port": 3306,  "connection_type": "standard", "has_schema": False, "schema_default": None},
-    "mariadb":    {"default_port": 3306,  "connection_type": "standard", "has_schema": False, "schema_default": None},
-    "mssql":      {"default_port": 1433,  "connection_type": "standard", "has_schema": True,  "schema_default": "dbo"},
-    "oracle":     {"default_port": 1521,  "connection_type": "standard", "has_schema": True,  "schema_default": None},
-    "clickhouse": {"default_port": 9000,  "connection_type": "standard", "has_schema": True,  "schema_default": "default"},
-    "redshift":   {"default_port": 5439,  "connection_type": "standard", "has_schema": True,  "schema_default": "public"},
-    "mongodb":    {"default_port": 27017, "connection_type": "uri",      "has_schema": False, "schema_default": None},
-    "sqlite":     {"default_port": None,  "connection_type": "file",     "has_schema": False, "schema_default": None},
-    "bigquery":   {"default_port": None,  "connection_type": "bigquery", "has_schema": True,  "schema_default": None},
-    "snowflake":  {"default_port": 443,   "connection_type": "snowflake","has_schema": True,  "schema_default": "PUBLIC"},
+# common_layers.py
+
+COMMON_LAYERS = {
+    "ssh_tunnel": {
+        "id": "ssh",
+        "label": "SSH Tunnel",
+        "description": "Connect securely via a bastion host.",
+        "fields": {
+            "ssh_host": {"label": "SSH Host", "type": "text", "placeholder": "bastion.example.com", "required": True},
+            "ssh_port": {"label": "SSH Port", "type": "number", "default": 22, "required": True},
+            "ssh_user": {"label": "SSH User", "type": "text", "placeholder": "ubuntu", "required": True},
+            "ssh_private_key": {"label": "Private Key", "type": "file", "required": True} # Changed to file
+        }
+    },
+    "ssl_tls": {
+        "id": "ssl",
+        "label": "SSL / TLS Encryption",
+        "description": "Require encrypted transport or Mutual TLS (mTLS) via certificates.",
+        "fields": {
+            "sslmode": {"label": "SSL Mode", "type": "select", "options": ["disable", "allow", "prefer", "require", "verify-ca", "verify-full"], "default": "prefer", "required": True},
+            "sslrootcert": {"label": "CA Root Certificate", "type": "file", "required": False}, # Changed to file
+            "sslcert": {"label": "Client Certificate (mTLS)", "type": "file", "required": False}, # Changed to file
+            "sslkey": {"label": "Client Private Key", "type": "file", "required": False} # Changed to file
+        }
+    }
 }
+
+VENDOR_CONFIG = [
+    ("Databases", {
+        "postgresql": {
+            "metadata": {
+                "id": "postgresql",
+                "label": "PostgreSQL",
+                "kind": "database",
+                "image": "icons/postgres.png",
+            },
+            "fields": {
+                "host": {"label": "Host", "type": "text", "placeholder": "db.example.com", "required": True},
+                "port": {"label": "Port", "type": "number", "default": 5432, "required": True},
+                "database": {"label": "Database Name", "type": "text", "default": "postgres", "required": True},
+                "user": {"label": "Username", "type": "text", "required": True},
+                "password": {"label": "Password", "type": "password", "required": True},
+                "schema": {"label": "Default Schema", "type": "text", "default": "public", "required": False}
+            },
+            "features": {"supports_ssh": True, "supports_ssl": True}
+        },
+        "mysql": {
+            "metadata": {
+                "id": "mysql",
+                "label": "MySQL",
+                "kind": "database",
+                "image": "icons/mysql.png",
+            },
+            "fields": {
+                "name": {"label": "Connection Name", "type": "text", "required": True},
+                "host": {"label": "Host", "type": "text", "required": True},
+                "port": {"label": "Port", "type": "number", "default": 3306, "required": True},
+                "database": {"label": "Database Name", "type": "text", "required": True},
+                "user": {"label": "Username", "type": "text", "required": True},
+                "password": {"label": "Password", "type": "password", "required": True}
+            },
+            "features": {"supports_ssh": True, "supports_ssl": True}
+        },
+        "sqlite": {
+            "metadata": {
+                "id": "sqlite",
+                "label": "SQLite",
+                "kind": "database",
+                "image": "icons/SQLite.png",
+            },
+            "fields": {
+                "name": {"label": "Connection Name", "type": "text", "required": True},
+                "file": {"label": "Database File (.sqlite, .db)", "type": "file", "required": True}
+            },
+            "features": {"supports_ssh": False, "supports_ssl": False}
+        }
+    }),
+
+    ("Data Warehouses", {
+        "bigquery": {
+            "metadata": {
+                "id": "bigquery",
+                "label": "BigQuery",
+                "kind": "warehouse",
+                "image": "icons/BigQuery.png",
+            },
+            "fields": {
+                "name": {"label": "Connection Name", "type": "text", "required": True},
+                "project_id": {"label": "GCP Project ID", "type": "text", "required": True},
+                "dataset_id": {"label": "Dataset ID", "type": "text", "required": True},
+                "service_account_json": {"label": "Service Account JSON Key", "type": "file", "required": True}
+            },
+            "features": {"supports_ssh": False, "supports_ssl": True}
+        },
+        "snowflake": {
+            "metadata": {
+                "id": "snowflake",
+                "label": "Snowflake",
+                "kind": "warehouse",
+                "image": "icons/snowflake.png",
+            },
+            "fields": {
+                "name": {"label": "Connection Name", "type": "text", "required": True},
+                "account_identifier": {"label": "Account Identifier", "type": "text", "placeholder": "xy12345.us-east-1", "required": True},
+                "warehouse": {"label": "Warehouse", "type": "text", "required": True},
+                "database": {"label": "Database", "type": "text", "required": True},
+                "user": {"label": "Username", "type": "text", "required": True},
+                "password": {"label": "Password", "type": "password", "required": True}
+            },
+            "features": {"supports_ssh": False, "supports_ssl": True}
+        }
+    }),
+
+    ("APIs", {
+        "rest_api": {
+            "metadata": {
+                "id": "rest_api",
+                "label": "REST API",
+                "kind": "api",
+                "image": "",
+            },
+            "fields": {
+                "name": {"label": "Connection Name", "type": "text", "required": True},
+                "endpoint": {"label": "Base URL", "type": "text", "placeholder": "https://api.example.com/v1", "required": True},
+                "auth_type": {"label": "Auth Type", "type": "select", "options": ["None", "Bearer Token", "API Key", "Basic Auth"], "default": "None"},
+                "token": {"label": "Token / Key", "type": "password", "required": False}
+            },
+            "features": {"supports_ssh": False, "supports_ssl": True}
+        }
+    }),
+
+    ("Local Files", {
+        "csv_file": {
+            "metadata": {
+                "id": "csv_file",
+                "label": "CSV File",
+                "kind": "file",
+                "image": "",
+            },
+            "fields": {
+                "name": {"label": "Connection Name", "type": "text", "required": True},
+                "file": {"label": "Upload CSV", "type": "file", "required": True},
+                "delimiter": {"label": "Delimiter", "type": "text", "default": ",", "required": True}
+            },
+            "features": {"supports_ssh": False, "supports_ssl": False}
+        }
+    })
+]
+
+"""
+                                ('APIs', [
+                                ('REST API', 'rest_api', '', 'Connect via standard HTTP endpoints.'),
+                                ('GraphQL API', 'graphql_api', '', 'Query specific data via GraphQL.'),
+                                ('gRPC API', 'grpc_api', '', 'High-performance RPC framework.')
+                                ]),
+                            
+                                ('Local Files', [
+                                ('CSV File', 'csv_file', '', 'Ingest flat CSV data.'),
+                                ('Excel File', 'excel_file', '', 'Import sheets from .xlsx files.'),
+                                ('JSON File', 'json_file', '', 'Parse nested or flat JSON files.')
+                                ])
+
+"""
 
 # For LLMs
 PROVIDER_FIELDS = {

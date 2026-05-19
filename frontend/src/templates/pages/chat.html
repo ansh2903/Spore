@@ -103,7 +103,7 @@
             @apply relative px-3 py-2 text-slate-600 font-semibold transition-colors hover:text-primary;
         }
         .nav-link-active {
-            @apply text-primary font-bold;
+            @apply text-white font-bold;
         }
         .nav-link-active::after {
             content: '';
@@ -228,18 +228,28 @@
 <body class="soft-gradient-bg h-screen">
     <header class="header-glass fixed top-0 w-full z-50 h-16 flex items-center justify-between px-8">
         <div class="flex items-center gap-12">
-            <div class="flex items-center gap-2">
-                <div
-                    class="w-8 h-8 bg-primary organic-border flex items-center justify-center text-white shadow-tactile">
-                    <span class="material-symbols-outlined text-xl">rocket_launch</span>
+            <div class="flex items-center gap-3 group cursor-pointer">
+                <div class="w-9 h-9 flex items-center justify-center relative">
+                    <svg class="w-full h-full" fill="none" viewbox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M16 30 C 16 20, 10 16, 13 6" fill="none" stroke="#059669" stroke-linecap="round"
+                            stroke-width="2.5"></path>
+                        <path d="M16 30 C 18 22, 24 18, 21 10" fill="none" stroke="#10b981" stroke-linecap="round"
+                            stroke-width="2"></path>
+                        <circle cx="13" cy="6" fill="#059669" r="3.5"></circle>
+                        <circle cx="21" cy="10" fill="#10b981" r="2.5"></circle>
+                        <circle cx="25" cy="18" fill="#34d399" r="1.5"></circle>
+                        <circle cx="8" cy="20" fill="#059669" r="2"></circle>
+                    </svg>
                 </div>
-                <span class="text-xl font-black tracking-tighter text-slate-900">ScalAble</span>
+                <a href="/">
+                <span class="text-2xl font-playful font-bold tracking-tight text-slate-900"
+                    style="font-family: 'Pacifico', cursive;">
+                    Spore
+                </span>
+                </a>
             </div>
-            <nav class="hidden md:flex items-center gap-6">
-                <a class="nav-link text-sm" href="#">Data Deck</a>
-                <a class="nav-link text-sm" href="#">Live Chat</a>
-                <a class="nav-link nav-link-active text-sm" href="#">AI Playground</a>
-            </nav>
+
+
         </div>
         <div class="flex items-center gap-4">
             <div class="flex items-center gap-3 bg-white border border-slate-200 px-3 py-1 rounded-lg mr-2">
@@ -285,11 +295,13 @@
             </button>
 
             <div class="mt-auto flex flex-col items-center gap-1 w-full border-t border-slate-100 pt-2">
+                <a href="/settings">
                 <button
                     class="w-9 h-9 flex items-center justify-center rounded-lg text-slate-300 hover:text-slate-500 transition-all relative group/tip">
                     <span class="material-symbols-outlined text-[19px]">settings</span>
                     <span class="sidebar-tip">Settings</span>
                 </button>
+                </a>
                 <button
                     class="w-9 h-9 flex items-center justify-center rounded-lg text-slate-300 hover:text-slate-500 transition-all relative group/tip">
                     <span class="material-symbols-outlined text-[19px]">help_outline</span>
@@ -439,7 +451,7 @@
         </div>
     </aside>
 
-    <main id="app-viewport" data-view="landing" class="ml-16 pt-16 h-screen flex overflow-hidden">
+    <main id="app-viewport" class="ml-16 pt-16 h-screen flex overflow-hidden">
         <!-- Notebook Split -->
         <section id="notebook-panel"
             class="h-full bg-slate-50 flex-1 bg-transparent flex flex-col overflow-hidden relative">
@@ -513,11 +525,15 @@
                     <!-- Cells injected here dynamically -->
                 </div>
 
-                <!-- Add Cell Button -->
-                <div class="px-6 py-2 shrink-0">
-                    <button onclick="addCell()"
-                        class="w-full border-2 border-dashed border-slate-200 hover:border-primary/40 text-slate-400 hover:text-primary text-[10px] font-black uppercase tracking-widest py-2 rounded-xl transition-all">
-                        + ADD CELL
+                <!-- Add Cell Buttons -->
+                <div class="px-6 py-2 shrink-0 flex gap-2">
+                    <button onclick="addCell('sql')"
+                        class="flex-1 border-2 border-dashed border-primary/30 hover:border-primary text-primary text-[10px] font-black uppercase tracking-widest py-2 rounded-xl transition-all">
+                        + SQL CELL
+                    </button>
+                    <button onclick="addCell('python')"
+                        class="flex-1 border-2 border-dashed border-slate-200 hover:border-primary/40 text-slate-400 hover:text-primary text-[10px] font-black uppercase tracking-widest py-2 rounded-xl transition-all">
+                        + PYTHON CELL
                     </button>
                 </div>
 
@@ -562,7 +578,6 @@
             <div id="gutter" class="gutter-handle"></div>
         </div>
 
-        <!-- Chat Split -->
         <section id="chat-panel"
             class="w-[340px] xl:w-[400px] flex-shrink-0 flex flex-col bg-white/40 border-r border-slate-200/60 p-3">
             <div class="flex items-center justify-between mb-3">
@@ -575,7 +590,6 @@
                 </div>
             </div>
 
-            <!-- Will disappear when the user input is appended to the chat-messages-container -->
             <div id="landing-hero" class="flex-1 flex flex-col items-center justify-center transition-all duration-700">
 
                 <div class="inline-flex items-center gap-2 px-3 py-1 bg-slate-900 rounded-pill mb-6">
@@ -593,12 +607,10 @@
             </div>
 
             <div id='chat-messages-container' class="flex-1 overflow-y-auto space-y-2 pr-1 mb-3 scrollbar-thin">
-                <!-- Dynamic Messages Will Be Inserted Here -->
             </div>
 
             <div id="input-wrapper" class="transition-all duration-500 heavy-card bg-white overflow-hidden">
 
-                <!-- Top bar: DB selector stays the same always -->
                 <div class="px-3 py-1.5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         <span class="material-symbols-outlined text-xs text-primary">database</span>
@@ -612,7 +624,6 @@
                         </select>
                     </div>
 
-                    <!-- Mode toggle — this is the only new element -->
                     <div class="flex items-center bg-slate-100 rounded-lg p-0.5 gap-0.5">
                         <button id="mode-ai" onclick="setMode('ai')"
                             class="mode-btn active px-2.5 py-1 text-[9px] font-black rounded-md transition-all uppercase tracking-wider">
@@ -631,21 +642,18 @@
                     </div>
                 </div>
 
-                <!-- AI input -->
                 <div id="input-ai">
                     <textarea id="messageInput"
                         class="w-full bg-transparent border-none focus:ring-0 text-xs resize-none h-16 placeholder:text-slate-400 font-bold p-3"
                         placeholder="Ask for an analysis..."></textarea>
                 </div>
 
-                <!-- SQL input — hidden by default -->
                 <div id="input-sql" class="hidden">
                     <textarea id="sqlInput"
                         class="w-full bg-transparent border-none focus:ring-0 text-xs resize-none h-16 placeholder:text-slate-400 font-mono p-3 text-slate-700"
                         placeholder="SELECT * FROM your_table WHERE ..."></textarea>
                 </div>
 
-                <!-- Bottom bar -->
                 <div class="flex justify-between items-center p-2 pt-0">
                     <div class="flex gap-1">
                         <input type="file" id="hiddenFileInput" class="hidden" accept=".csv,.json,.xlsx">
@@ -662,13 +670,16 @@
                 </div>
             </div>
         </section>
-
     </main>
 
+    <script>
+        window.SPORE_CONNECTIONS = {{ connections | tojson }};
+    </script>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/sidepanel.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/notebook.js') }}"></script>
+<script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+<script src="{{ url_for('static', filename='js/sidepanel.js') }}"></script>
+<script src="{{ url_for('static', filename='js/MIME.js') }}"></script>
+<script src="{{ url_for('static', filename='js/notebook.js') }}"></script>
     <script>
         window.MathJax = {
             tex: {
@@ -685,53 +696,6 @@
         };
     </script>
     <script id="MathJax-script" async src="/static/vendor/mathjax/tex-chtml.js"></script>
-
-    <script>
-        // ─── Layout State & Resizer Controller ─────────────────────────────
-
-        const viewport = document.getElementById('app-viewport');
-        const chatPanel = document.getElementById('chat-panel');
-        const resizer = document.getElementById('resizer');
-
-        // State switchers
-        function switchToChatView() {
-            if (viewport && viewport.dataset.view === 'landing') {
-                viewport.dataset.view = 'chat';
-            }
-        }
-
-        function switchToSplitView() {
-            if (viewport && viewport.dataset.view !== 'split') {
-                viewport.dataset.view = 'split';
-            }
-        }
-
-        // Resizer logic
-        let isResizing = false;
-        if (resizer) {
-            resizer.addEventListener('mousedown', (e) => {
-                isResizing = true;
-                e.preventDefault(); // Prevents text selection while dragging
-            });
-
-            document.addEventListener('mousemove', (e) => {
-                if (!isResizing) return;
-                // HTML order is Notebook (flex-1) -> Resizer -> ChatPanel
-                // Flex row-reverse puts Chat on the right.
-                const chatWidth = window.innerWidth - e.clientX;
-
-                // Clamp the width between 300px and 800px so it doesn't break UI
-                if (chatWidth > 300 && chatWidth < 800) {
-                    chatPanel.style.width = `${chatWidth}px`;
-                }
-            });
-
-            document.addEventListener('mouseup', () => {
-                isResizing = false;
-            });
-        }
-
-    </script>
 
 </body>
 

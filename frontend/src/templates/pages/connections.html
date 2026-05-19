@@ -1,19 +1,17 @@
 <!DOCTYPE html>
-
 <html class="light" lang="en">
 
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Data Connections | InsightCurator</title>
+    <title>Field Stations | Spore</title>
     <link
-        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;family=Fredoka:wght@400;600;700&amp;family=Pacifico&amp;display=swap"
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Pacifico&display=swap"
         rel="stylesheet" />
     <link
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
         rel="stylesheet" />
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
     <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
@@ -52,7 +50,7 @@
     </script>
     <style type="text/tailwindcss">
         @layer base {
-            body { 
+            body {
                 @apply bg-bg-main text-slate-800 font-body antialiased;
             }
             h1, h2, h3 {
@@ -67,6 +65,12 @@
         .organic-border {
             border-radius: 60% 40% 70% 30% / 30% 60% 40% 70%;
         }
+        .empty-dashed {
+            border-style: dashed;
+            border-color: #00A36C;
+            border-width: 2px;
+            border-radius: 12px;
+        }
         .heavy-card {
             @apply bg-white border-2 border-slate-200 rounded-organic transition-all duration-300;
             box-shadow: 0 12px 0 -4px theme('colors.slate.100');
@@ -76,6 +80,12 @@
             transform: translateY(-2px);
             box-shadow: 0 16px 0 -4px rgba(0, 163, 108, 0.1);
         }
+        .custom-range {
+            @apply h-2 w-full bg-slate-200 rounded-full appearance-none cursor-pointer;
+        }
+        .custom-range::-webkit-slider-thumb {
+            @apply appearance-none w-6 h-6 bg-primary rounded-full border-4 border-white shadow-lg transition-transform hover:scale-125 active:scale-95;
+        }
         .soft-gradient-bg {
             background: radial-gradient(circle at 50% -20%, #ecfdf5 0%, #f8fafc 60%);
         }
@@ -83,7 +93,7 @@
             @apply relative px-3 py-2 text-slate-600 font-semibold transition-colors hover:text-primary;
         }
         .nav-link-active {
-            @apply text-primary font-bold;
+            @apply text-white font-bold;
         }
         .nav-link-active::after {
             content: '';
@@ -93,10 +103,36 @@
             @apply font-script text-primary not-italic;
             text-transform: none;
         }
+        .form-input-clean {
+            @apply w-full bg-white border-2 border-slate-200 rounded-2xl px-4 py-2.5 text-sm font-medium focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none;
+        }
+        .form-label-clean {
+            @apply text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-2 px-1;
+        }
+        .fade-in {
+            animation: fadeIn 0.2s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        [x-cloak] { display: none !important; }
+
+        /* Flash messages */
+        .flash-success { @apply bg-primary/10 border border-primary/30 text-primary-dark rounded-2xl px-5 py-3 text-sm font-bold flex items-center gap-2; }
+        .flash-error   { @apply bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl px-5 py-3 text-sm font-bold flex items-center gap-2; }
+
+        /* API key input eye toggle */
+        .api-key-wrap { @apply relative; }
+        .api-key-wrap input { @apply pr-12; }
+        .api-key-wrap button { @apply absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors; }
+
     </style>
 </head>
 
-<body class="soft-gradient-bg min-h-screen">
+<body class="min-h-screen" style="background: radial-gradient(ellipse at 70% -5%, #ecfdf5 0%, #f8fafc 50%);">
+
+    <!-- ── Header ──────────────────────────────────────────────────────────── -->
     <header class="header-glass fixed top-0 w-full z-50 h-16 border-b border-black/5">
         <div class="max-w-[1400px] mx-auto h-full flex items-center justify-between px-6 md:px-8">
 
@@ -120,13 +156,13 @@
             </div>
 
             <nav class=" md:flex items-center bg-black/5 rounded-full px-2 py-1 border border-black/5">
-                <a class="nav-link nav-link-active px-4 py-1.5 rounded-full text-xs font-bold bg-emerald-600 shadow-sm"
+                <a class="nav-link px-4 py-1.5 rounded-full text-xs font-medium transition-all hover:bg-white/50"
                     href="/">
                     Mission Control
                 </a>
-                <a class="nav-link px-4 py-1.5 rounded-full text-xs font-medium transition-all hover:bg-white/50"
+                <a class="nav-link nav-link-active px-4 py-1.5 rounded-full text-xs font-bold bg-emerald-600 shadow-sm"
                     href="/connections">
-                    Connection Center   
+                    Connection Center
                 </a>
                 <a class="nav-link px-4 py-1.5 rounded-full text-xs font-medium transition-all hover:bg-white/50"
                     href="/settings">
@@ -135,182 +171,157 @@
             </nav>
         </div>
     </header>
-    <div class="pt-28 pb-12 px-10 max-w-[1600px] mx-auto grid grid-cols-12 gap-10">
-        <aside class="col-span-12 lg:col-span-3 space-y-6">
-            <div class="heavy-card p-6">
-                <h2 class="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-6 flex items-center gap-2">
-                    <span class="material-symbols-outlined text-sm">terminal</span> Studio Control
-                </h2>
-                <nav class="space-y-2">
-                    <a class="flex items-center justify-between px-4 py-3 rounded-2xl text-slate-600 hover:bg-primary-soft hover:text-primary transition-all group"
-                        href="#">
-                        <div class="flex items-center gap-3">
-                            <span class="material-symbols-outlined">science</span>
-                            <span class="font-bold">Laboratory</span>
-                        </div>
-                        <span
-                            class="material-symbols-outlined opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
-                    </a>
-                    <a class="flex items-center justify-between px-4 py-3 rounded-2xl bg-primary text-white shadow-tactile font-bold"
-                        href="#">
-                        <div class="flex items-center gap-3">
-                            <span class="material-symbols-outlined">database</span>
-                            <span>Databases</span>
-                        </div>
-                    </a>
-                    <a class="flex items-center justify-between px-4 py-3 rounded-2xl text-slate-600 hover:bg-primary-soft hover:text-primary transition-all group"
-                        href="#">
-                        <div class="flex items-center gap-3">
-                            <span class="material-symbols-outlined">forum</span>
-                            <span class="font-bold">AI Chat</span>
-                        </div>
-                        <span
-                            class="material-symbols-outlined opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
-                    </a>
-                    <a class="flex items-center justify-between px-4 py-3 rounded-2xl text-slate-600 hover:bg-primary-soft hover:text-primary transition-all group"
-                        href="#">
-                        <div class="flex items-center gap-3">
-                            <span class="material-symbols-outlined">query_stats</span>
-                            <span class="font-bold">Run History</span>
-                        </div>
-                        <span
-                            class="material-symbols-outlined opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
-                    </a>
-                </nav>
-            </div>
-            <button
-                class="w-full py-5 bg-slate-900 text-white rounded-organic font-black text-lg shadow-xl flex items-center justify-center gap-3 hover:translate-y-[-2px] transition-all">
-                <span class="material-symbols-outlined text-2xl">play_circle</span>
-                START EXECUTION
-            </button>
-        </aside>
-        <main class="col-span-12 lg:col-span-9 grid grid-cols-12 gap-10">
-            <section class="col-span-12 lg:col-span-5 space-y-4">
-                <div class="mb-2">
-                    <h1 class="text-5xl font-black text-slate-900 mb-2 tracking-tighter leading-tight">Data <span
-                            class="script-text text-6xl block -mt-2">Connection Center</span></h1>
-                    <p class="text-slate-500 font-semibold leading-relaxed text-lg">Streamline your analysis by bridging
-                        your infrastructure directly to our curated processing engine.</p>
-                </div>
-                <div class="heavy-card p-8 bg-primary-soft border-primary/20 relative overflow-hidden group">
-                    <div
-                        class="absolute -top-10 -right-10 w-40 h-40 bg-white/50 organic-border blur-2xl group-hover:scale-125 transition-transform duration-700">
-                    </div>
-                    <div class="relative z-10">
-                        <div
-                            class="bg-primary text-white w-fit px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4">
-                            LABORATORY TIP</div>
-                        <h3 class="text-2xl font-extrabold text-slate-900 leading-tight mb-4">"Most enterprises start
-                            with PostgreSQL."</h3>
-                        <p class="text-slate-600 text-sm leading-relaxed font-medium mb-6">It offers the best balance of
-                            stability and query performance for mid-to-large datasets. Highly recommended for relational
-                            mapping.</p>
-                        <a class="flex items-center gap-2 text-primary font-black text-xs uppercase tracking-widest hover:gap-3 transition-all"
-                            href="#">
-                            Learn more about Postgres
-                            <span class="material-symbols-outlined text-sm">arrow_forward</span>
-                        </a>
-                    </div>
-                </div>
-            </section>
 
-            <!-- This is the section that will change dynamically on this page -->
-            <section class="col-span-12 lg:col-span-7" id="dynamic-content-frame">
-                <div class="heavy-card p-8 h-full">
-                    <div class="flex items-center justify-between mb-8">
-                        <div class="flex items-center gap-4">
-                            <div class="p-3 bg-primary-soft organic-border text-primary">
-                                <span class="material-symbols-outlined text-2xl">cable</span>
-                            </div>
-                            <div>
-                                <h2 class="text-2xl font-black text-slate-900 tracking-tight">Active Connectors</h2>
-                                <span class="text-[9px] font-black text-primary uppercase tracking-widest">{{ no_of_connections }} Nodes
-                                    Online</span>
-                            </div>
-                        </div>
-                        <a href="/connections/new">
-                        <button
-                            class="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-xl font-bold text-xs hover:bg-primary hover:text-white transition-all">
-                            <span class="material-symbols-outlined text-sm">add</span>
-                            Add New Connector
-                        </button>
-                        </a>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-                        {% if no_of_connections == 0 %}
-                            <div class="col-span-1 text-center py-20 border-2 border-dashed border-slate-300 rounded-xl">
-                                <span class="material-symbols-outlined text-slate-400 text-4xl mb-4">cable</span>
-                                <p class="text-slate-400 font-semibold text-lg">No active connections yet. Start by adding a new connector!</p>
-                            </div>
-                        {% else %}
-                        {% for connection in connections %}
-                        <div
-                            class="p-6 rounded-2xl border hover:border-primary/30 transition-all cursor-pointer group shadow-sm heavy-card active-powerup">
-                            <div class="flex justify-between items-start mb-4">
-                                <div
-                                    class="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
-                                    <span class="material-symbols-outlined text-primary text-2xl">database</span>
-                                </div>
-                            </div>
-                            <h4 class="font-black text-slate-900 mb-1">{{ connection.db_type }}</h4>
-                            <p class="text-xs text-slate-500 mb-4 leading-relaxed">Deep insight extraction for
-                                relational data.</p>
-                            <div
-                                class="text-[10px] font-black text-primary flex items-center gap-1 group-hover:translate-x-1 transition-transform uppercase tracking-widest">
-                                Configure <span class="material-symbols-outlined text-xs">chevron_right</span>
-                            </div>
-                        </div>
-                        {% endfor %}
-                         {% endif %}
-                    </div>
-                    <div class="pt-8 border-t border-slate-100">
-                        <div class="flex items-center justify-between mb-6">
-                            <h5 class="text-xs font-black uppercase tracking-widest text-slate-400">Other Sources</h5>
-                            <button
-                                class="text-[10px] font-black text-primary uppercase tracking-widest hover:underline">View
-                                all 40+ connectors</button>
-                        </div>
-                        <div class="flex flex-wrap gap-3">
-                            <div
-                                class="px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold text-slate-600 hover:border-primary/20 hover:bg-white transition-all cursor-pointer">
-                                Redis</div>
-                            <div
-                                class="px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold text-slate-600 hover:border-primary/20 hover:bg-white transition-all cursor-pointer">
-                                MySQL</div>
-                            <div
-                                class="px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold text-slate-600 hover:border-primary/20 hover:bg-white transition-all cursor-pointer">
-                                MsSQL</div>
-                            <div
-                                class="px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold text-slate-600 hover:border-primary/20 hover:bg-white transition-all cursor-pointer">
-                                MongoDB</div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-        </main>
-    </div>
-
-    <!-- Notification/alert -->
-    <div class="fixed bottom-10 left-1/2 -translate-x-1/2 w-full max-w-2xl px-6 z-[60]">
-        <div
-            class="bg-slate-900 border border-slate-800 text-white p-5 rounded-[2rem] shadow-2xl flex items-center gap-5">
-            <div
-                class="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center text-primary shrink-0 animate-pulse">
-                <span class="material-symbols-outlined">lightbulb</span>
-            </div>
-            <div class="flex-1">
-                <p class="text-sm font-bold text-primary mb-0.5">Mission Control Advice</p>
-                <p class="text-xs font-medium opacity-70 leading-relaxed">
-                    PostgreSQL is your best bet for complex relational mappings. Ensure your connection strings are
-                    SSL-enabled for maximum security!
+    <!-- ── Layout ──────────────────────────────────────────────────────────── -->
+    <!-- Main -->
+    <main class="max-w-7xl mx-auto w-full flex flex-col px-8 pt-24 pb-10 space-y-10">
+        <!-- Page header -->
+        <div class="flex items-end justify-between">
+            <div>
+                <p class="text-[9px] font-black uppercase tracking-[0.22em] text-primary mb-1.5">Data Infrastructure</p>
+                <h1 class="text-3xl font-black text-slate-900 tracking-tight leading-none flex items-baseline gap-3">
+                    Field
+                    <span
+                        style="font-family:'Pacifico',cursive; font-size:2.2rem; color:#00A36C; font-weight:400;">Stations</span>
+                </h1>
+                <p class="text-slate-400 text-sm font-medium mt-1.5 max-w-md">
+                    {{ no_of_connections }} source{{ 's' if no_of_connections != 1 }} connected. Data stays on your
+                    machine.
                 </p>
             </div>
-            <button class="p-2 text-white/20 hover:text-white transition-colors">
-                <span class="material-symbols-outlined">close</span>
+            <a href="/connections/new">
+                <button
+                    class="flex items-center gap-2 px-5 py-3 bg-slate-900 hover:bg-primary text-white rounded-xl font-bold text-sm transition-all">
+                    <span class="material-symbols-outlined" style="font-size:16px;">add</span>
+                    New Station
+                </button>
+            </a>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="flex items-center gap-3">
+            <div class="relative flex-1 max-w-xs">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-300"
+                    style="font-size:16px;">search</span>
+                <input type="text" placeholder="Filter stations..."
+                    class="w-full pl-9 pr-4 py-2 bg-white border border-slate-100 rounded-xl text-sm font-medium placeholder-slate-300 focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none transition-all" />
+            </div>
+            <div class="flex items-center gap-1 bg-white border border-slate-100 rounded-xl p-1">
+                <button
+                    class="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-slate-900 text-white">All</button>
+                <button
+                    class="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider text-slate-400 hover:text-slate-600">Database</button>
+                <button
+                    class="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider text-slate-400 hover:text-slate-600">Warehouse</button>
+                <button
+                    class="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider text-slate-400 hover:text-slate-600">File</button>
+            </div>
+        </div>
+
+        <!-- Empty state -->
+        {% if no_of_connections == 0 %}
+
+        <div
+            class="flex flex-col items-center justify-center p-12 md:p-20 border-2 border-dashed border-slate-200 rounded-organic bg-slate-50/50 text-center space-y-6">
+            <div class="w-24 h-24 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                <span class="material-symbols-outlined" style="font-size: 48px;">sensors_off</span>
+            </div>
+            <div class="space-y-2">
+                <h2 class="text-3xl text-slate-800">No active stations found</h2>
+                <p class="text-slate-500 max-w-sm mx-auto font-medium">Your local node is currently quiet. Establish a
+                    new connection to start monitoring managed infrastructure.</p>
+            </div>
+            <a href="{{ url_for('connections.new_connector') }}">
+
+                <button
+                    class="flex items-center gap-2.5 px-8 py-4 bg-primary hover:bg-primary-dark text-white rounded-2xl font-bold text-sm transition-all shadow-xl shadow-primary/20">
+                    <span class="material-symbols-outlined" style="font-size:20px;">add</span>
+                    Establish New Station
+                </button>
+            </a>
+        </div>
+        {% else %}
+        <div class="space-y-2.5">
+            <div class="space-y-4">
+                <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-slate-50 border-b border-slate-200">
+                            <tr>
+                                <th class="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                    Name</th>
+                                <th class="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                    Source</th>
+                                <th class="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                    Created At</th>
+                                <th
+                                    class="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">
+                                    Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-sm">
+                            {% for connection in connections %}
+                            <tr class="hover:bg-slate-50 transition-colors group">
+                                <td class="py-3 px-4">
+                                    <div class="flex items-center gap-3">
+                                        <div>
+                                            <p class="font-bold text-slate-900">{{ connection.name }}</p>
+                                            <span
+                                                class="kind-badge bg-emerald-50 text-emerald-700 border border-emerald-100 mt-1 inline-block">{{ connection.desc }}</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4">
+                                    <p class="font-mono text-xs text-slate-500">{{ connection.source_type }}</p>
+                                </td>
+                                <td class="py-3 px-4">
+                                    <div class="flex items-center gap-2">
+                                        <span
+                                            class="text-[10px] font-mono text-emerald-700 uppercase tracking-widest font-bold">{{ connection.created_at }}</span>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4">
+                                    <div
+                                        class="flex items-center justify-end gap-1 ">
+                                        <a href="{{ url_for('connections.delete_connector', conn_id=connection.id) }}">                                        <button
+                                            class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-all"
+                                            title="Remove">
+                                            <span class="material-symbols-outlined"
+                                                style="font-size:16px;">delete</span>
+                                        </button>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+    </main>
+
+    <!-- ── Flash messages ─────────────────────────────────────────────────── -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-md px-4 z-[60] space-y-2">
+        {% for category, message in messages %}
+        <div id="flash-{{ loop.index }}"
+            class="bg-slate-900 border border-slate-700 text-white px-5 py-4 rounded-2xl shadow-2xl flex items-center gap-4">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0
+                    {{ 'bg-red-500/20 text-red-400' if category == 'error' else 'bg-primary/20 text-primary' }}">
+                <span class="material-symbols-outlined" style="font-size:15px;">{{ 'report' if category == 'error' else
+                    'check_circle' }}</span>
+            </div>
+            <p class="text-xs font-medium flex-1 leading-relaxed opacity-80">{{ message }}</p>
+            <button onclick="document.getElementById('flash-{{ loop.index }}').remove()"
+                class="text-white/30 hover:text-white">
+                <span class="material-symbols-outlined" style="font-size:15px;">close</span>
             </button>
         </div>
+        {% endfor %}
     </div>
+    {% endif %}
+    {% endwith %}
 
 </body>
 

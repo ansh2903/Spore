@@ -1,0 +1,95 @@
+# Troubleshooting
+
+## Application won't start
+
+### `ENCRYPTION_KEY not set in environment`
+
+Generate a Fernet key and add it to `.env`:
+
+```bash
+python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+```
+
+### Redis connection errors
+
+- Confirm Redis/KeyDB is running: `redis-cli -h 127.0.0.1 ping` → `PONG`
+- Check `REDIS_HOST` and `REDIS_PORT` in `.env`
+- In Docker Compose, use `REDIS_HOST=keydb`
+
+### `ModuleNotFoundError: spore` or `uuid_extensions`
+
+Install dependencies from the repo root:
+
+```bash
+pip install -e .
+```
+
+## Static assets 404 (CSS, JS, icons)
+
+Static files must be served from `frontend/src/templates/pages/static/`. If you moved assets elsewhere, update `get_frontend_paths()` in [`spore/_routes/utils.py`](../spore/_routes/utils.py).
+
+Vendor icons should exist under `frontend/src/templates/pages/static/icons/`.
+
+## LLM / chat issues
+
+### No response from `/chat/ask`
+
+1. Verify `spore/_config/settings.json` has valid `provider` and `model`.
+2. For Ollama: ensure the model is pulled and `OLLAMA_BASE` is reachable.
+3. Check server logs in `logs/` or the terminal running `spore._app`.
+
+### Ollama unreachable from Docker
+
+Use `host.docker.internal` as `OLLAMA_BASE` (see `docker-compose.yml`). On Linux, you may need `extra_hosts: ["host.docker.internal:host-gateway"]` in compose.
+
+### `KeyError` in inference options
+
+Ensure `settings.json` includes an `options` object with keys expected by your provider (see `PROVIDER_FIELDS` in `settings.py`).
+
+## Database connections
+
+### Connection test fails for `localhost` in Docker
+
+The app rewrites `localhost` / `127.0.0.1` to `host.docker.internal` when `is_running_in_docker()` is true. Use your host machine's reachable hostname if that still fails.
+
+### PostgreSQL preview errors (ADBC)
+
+PostgreSQL preview uses ADBC. Ensure `adbc_driver_postgresql` is installed and the server allows connections from your host.
+
+### Connector not in registry
+
+Only sources registered in [`spore/_connectors/registry.py`](../spore/_connectors/registry.py) work with `SourceConnector`. UI may list vendors that are not yet wired.
+
+## Materialize / kernel
+
+### Parquet files not visible in notebook
+
+- `SPORE_DATA_DIR` on the host must match where ingest writes files.
+- `KERNEL_DATA_MOUNT` must be the path the Jupyter kernel uses (default `/data`).
+- In Docker, the `spore_data` volume is mounted at `/data`.
+
+### Kernel does not start
+
+- `jupyter-client` must be installed.
+- Check browser console for Socket.IO connection errors.
+- Verify `ALLOWED_ORIGINS` includes your browser URL.
+
+## Docker build / run
+
+### Wrong module on startup (`src.app`)
+
+The container should run `python -m spore._app`. Rebuild after pulling Dockerfile fixes.
+
+### `requirements.txt` not found during build
+
+Run compose from the repo root with `context: ..` (see [`docker/docker-compose.yml`](../docker/docker-compose.yml)).
+
+## Settings file not found
+
+LLM settings are loaded from `spore/_config/settings.json`. If you use a custom path, create `config/settings.json` as a fallback or symlink to the primary file.
+
+## Getting more help
+
+1. Enable `DEBUG=True` in `.env` for Flask tracebacks (development only).
+2. Inspect [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) for request flow.
+3. Open an issue with logs, OS, Python version, and steps to reproduce.

@@ -74,7 +74,6 @@
         }
         .heavy-card:hover {
             @apply border-primary/30;
-            transform: translateY(-2px);
             box-shadow: 0 16px 0 -4px rgba(0, 163, 108, 0.1);
         }
         .soft-gradient-bg {
@@ -84,7 +83,7 @@
             @apply relative px-3 py-2 text-slate-600 font-semibold transition-colors hover:text-primary;
         }
         .nav-link-active {
-            @apply text-primary font-bold;
+            @apply text-white font-bold;
         }
         .nav-link-active::after {
             content: '';
@@ -103,245 +102,311 @@
             @apply bg-primary/30;
         }
         [x-cloak] { display: none !important; }
+        .f-label {
+            display: block;
+            font-size: 9.5px; font-weight: 900;
+            text-transform: uppercase; letter-spacing: 0.16em;
+            color: #94a3b8; margin-bottom: 5px;
+        }
+        .f-input {
+            width: 100%; background: white;
+            border: 1.5px solid #d8dbdf; border-radius: 10px;
+            padding: 8px 12px; font-size: 12.5px; font-weight: 500;
+            font-family: 'JetBrains Mono', monospace; color: #1e293b;
+            outline: none; transition: all 0.15s;
+        }
+        .f-input:focus { border-color: #00A36C; box-shadow: 0 0 0 3px rgba(0,163,108,0.08); }
+        .f-input::placeholder { color: #cbd5e1; font-family: 'Plus Jakarta Sans', sans-serif; }
+        .f-input:disabled { opacity: 0.45; cursor: not-allowed; }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .fade-up { animation: fadeUp 220ms ease-out forwards; }
     </style>
 </head>
 
 <body class="soft-gradient-bg min-h-screen">
     <!-- Unified Header -->
-    <header class="header-glass fixed top-0 w-full z-50 h-20 flex items-center justify-between px-10">
-        <div class="flex items-center gap-16">
-            <div class="flex items-center gap-3">
-                <div
-                    class="w-10 h-10 bg-primary organic-border flex items-center justify-center text-white shadow-tactile">
-                    <span class="material-symbols-outlined text-2xl">rocket_launch</span>
+    <header class="header-glass fixed top-0 w-full z-50 h-16 border-b border-black/5">
+        <div class="max-w-[1400px] mx-auto h-full flex items-center justify-between px-6 md:px-8">
+
+            <div class="flex items-center gap-3 group cursor-pointer">
+                <div class="w-9 h-9 flex items-center justify-center relative">
+                    <svg class="w-full h-full" fill="none" viewbox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M16 30 C 16 20, 10 16, 13 6" fill="none" stroke="#059669" stroke-linecap="round"
+                            stroke-width="2.5"></path>
+                        <path d="M16 30 C 18 22, 24 18, 21 10" fill="none" stroke="#10b981" stroke-linecap="round"
+                            stroke-width="2"></path>
+                        <circle cx="13" cy="6" fill="#059669" r="3.5"></circle>
+                        <circle cx="21" cy="10" fill="#10b981" r="2.5"></circle>
+                        <circle cx="25" cy="18" fill="#34d399" r="1.5"></circle>
+                        <circle cx="8" cy="20" fill="#059669" r="2"></circle>
+                    </svg>
                 </div>
-                <span class="text-2xl font-black tracking-tighter text-slate-900">DataFlow AI</span>
-            </div>
-            <nav class="hidden md:flex items-center gap-8">
-                <a class="nav-link" href="#">Data Deck</a>
-                <a class="nav-link nav-link-active" href="#">Laboratory</a>
-            </nav>
-        </div>
-        <div class="flex items-center gap-6">
-            <div class="flex items-center gap-3">
-                <button class="p-2 text-slate-400 hover:text-primary transition-colors"><span
-                        class="material-symbols-outlined">settings</span></button>
-                <div
-                    class="w-10 h-10 rounded-full bg-slate-200 border-2 border-slate-300 flex items-center justify-center overflow-hidden">
-                    <img alt="Profile" class="w-full h-full object-cover"
-                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuC9nkpLSRGJnG1A5hGO8QLT0MT0ZgNM9bK08FTZEn1Jit6xwoJTgluh3RxdsZkvZhHSnb1aE4iF1HEEav3ndcqOq3yiJpS4KtziJyOvf2ydd2FG-3LOkgIBi3pqwGo0wTGLDhS7XF2FkacFLbU86DGXHDByW3OsQjh-qRjM1nifky2EmsSHzF3J-Z59KETQA_Q9dK36z-U4ixf4lJ4HBWKYkE4V5ulHyr0xy0NIBRbCibZzrKXs8o6myp_yJp-p2CcN99nQ-GBJlrPg" />
-                </div>
-            </div>
-        </div>
-    </header>
-    <div class="pt-28 pb-12 px-10 max-w-[1600px] mx-auto grid grid-cols-12 gap-10">
-        <!-- Unified Sidebar -->
-        <aside class="col-span-12 lg:col-span-3 space-y-6">
-            <div class="heavy-card p-6">
-                <h2 class="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-6 flex items-center gap-2">
-                    <span class="material-symbols-outlined text-sm">terminal</span> Studio Control
-                </h2>
-                <nav class="space-y-2">
-                    <a class="flex items-center justify-between px-4 py-3 rounded-2xl text-slate-600 hover:bg-primary-soft hover:text-primary transition-all group font-semibold"
-                        href="#">
-                        <div class="flex items-center gap-3">
-                            <span class="material-symbols-outlined">science</span>
-                            <span>Laboratory</span>
-                        </div>
-                        <span
-                            class="material-symbols-outlined opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
-                    </a>
-                    <a class="flex items-center justify-between px-4 py-3 rounded-2xl bg-primary text-white shadow-tactile font-bold"
-                        href="#">
-                        <div class="flex items-center gap-3">
-                            <span class="material-symbols-outlined">database</span>
-                            <span>Databases</span>
-                        </div>
-                    </a>
-                    <a class="flex items-center justify-between px-4 py-3 rounded-2xl text-slate-600 hover:bg-primary-soft hover:text-primary transition-all group font-semibold"
-                        href="#">
-                        <div class="flex items-center gap-3">
-                            <span class="material-symbols-outlined">forum</span>
-                            <span>AI Chat</span>
-                        </div>
-                        <span
-                            class="material-symbols-outlined opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
-                    </a>
-                    <a class="flex items-center justify-between px-4 py-3 rounded-2xl text-slate-600 hover:bg-primary-soft hover:text-primary transition-all group font-semibold"
-                        href="#">
-                        <div class="flex items-center gap-3">
-                            <span class="material-symbols-outlined">query_stats</span>
-                            <span>Run History</span>
-                        </div>
-                        <span
-                            class="material-symbols-outlined opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
-                    </a>
-                </nav>
-            </div>
-            <button
-                class="w-full py-5 bg-slate-900 text-white rounded-organic font-black text-lg shadow-xl flex items-center justify-center gap-3 hover:translate-y-[-2px] transition-all">
-                <span class="material-symbols-outlined text-2xl">play_circle</span>
-                START EXECUTION
-            </button>
-        </aside>
-
-        <!-- Main Wizard Content -->
-        <main class="col-span-12 lg:col-span-9">
-            <form id="databaseForm" action="{{ url_for('endpoints.new_connector') }}" method="POST" enctype="multipart/form-data" @submit="loading = true">
-
-                <div id="dynamic-content-area" class="heavy-card p-12 bg-white relative overflow-hidden">
-                    <!-- Header Wizard Section -->
-                    <div class="flex flex-col md:flex-row md:items-start justify-between gap-8 mb-12">
-                        <div class="space-y-4">
-                            <nav
-                                class="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-                                <span class="text-primary font-bold">Connect</span>
-                                <span class="material-symbols-outlined text-xs">chevron_right</span>
-                                <span class="font-bold">New Source</span>
-                            </nav>
-                            <h1 class="text-5xl font-black text-slate-900 tracking-tighter leading-tight">
-                                Add your <span class="font-script text-primary font-normal lowercase">database</span>
-                            </h1>
-                            <p class="text-slate-500 font-medium leading-relaxed max-w-xl">Select a source below to
-                                enable
-                                real-time AI-powered analytics and flow orchestration across your infrastructure.</p>
-                        </div>
-                        <!-- Stepper -->
-                        <div class="flex flex-col items-end gap-3 shrink-0">
-                            <div class="flex gap-2">
-                                <div class="w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_12px_rgba(0,163,108,0.4)]">
-                                </div>
-                                <div class="w-2.5 h-2.5 rounded-full bg-slate-200"></div>
-                                <div class="w-2.5 h-2.5 rounded-full bg-slate-200"></div>
-                                <div class="w-2.5 h-2.5 rounded-full bg-slate-200"></div>
-                                <div class="w-2.5 h-2.5 rounded-full bg-slate-200"></div>
-                            </div>
-                            <span class="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Step 1: Select
-                                Source</span>
-                        </div>
-                    </div>
-                    <!-- Database Grid Selection -->
-                    <input type="hidden" id="db_type" name="db_type" value="">
-                    <div class="animate-in fade-in duration-500">
-                    <div
-                        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12 max-h-[520px] overflow-y-auto pr-4 custom-scrollbar">
-                        {% set db_types = [
-                        ('MySQL', 'mysql',
-                        'https://lh3.googleusercontent.com/aida-public/AB6AXuAjDxt2466c2SbgoHFv4Blvtq3TiJCKs0xKv2hSkDsTmHuEK72vQDR0On7Ocug89eCtoqd9DOfgN-8EZYfeC8X5H7eJFvIGy21ODG0qZG-JMbFqXwDLKSh3skMQsWQImAQoD8j1BFtuTQYtqVCfHtWWncHnQNejSwKgokMPtRaLa3SQoz8OzduX4LGPlDU_KL18NBxXrRfefj4HhDXCFZSgrHqz_PmWf-Zawp968eFqVUTHpF4AcgQlhmWtw-EKvCHsDMJzlQQNYfwm',
-                        'Relational database for web apps.'),
-                        ('SQL Server', 'mssql',
-                        'https://lh3.googleusercontent.com/aida-public/AB6AXuAI54hyqhTE5VyIlAVF668CQ7GzldKoAxdDaJQYBqkdwHaFEy4qY_eeJGdcF7LxUGwX-Vw_2vWne1sqmxcILO5WUuC_MQw_E6QDGpSAatSY-BE0e-otzpwDJCP3gisIaAb_3Qd4H44Kd94t2Oniw_QAzA5UFHPw8Cy0139KUe9iEW1b6ZKvI4kR-DJzXm70fTEv7iJsKOFVNj9tFUe0Ft6j5RuTnZfDgt4PkD4xyLulNga3pxyXRl0A4AbQM75bqrwTmjeg9Qr-x4e_',
-                        'Enterprise Microsoft engine.'),
-                        ('PostgreSQL', 'postgresql',
-                        'https://lh3.googleusercontent.com/aida-public/AB6AXuAXP05sbYJ5jZ4EzyN-DpjqCVu2VsTNagcSilMnLFOPEOGPPm7Hk9B8Upo-_NghSTN3Vb5PzmVrOHAwwjH3rAUalmTHw4NG-HXWCTToVwQlbfwm_mgJM85RSr0UQKp0ITA--juu_83fHF8HLaenBlZMXNLlbK7KJFnstLPAkcHJMRu2cCM-_HOgZ14Db_taEg-MnxzMOHIvtjHHq3iX1_vz7NBJS1n1Yh-q8baR97YfU__WjDiXf7Ms7aemzqeczaeLmKW_SqOeiE9l',
-                        'Advanced open-source relational database.'),
-                        ('Oracle', 'oracle',
-                        'https://lh3.googleusercontent.com/aida-public/AB6AXuDj3ZQN8KOiPtG9QwWSq6-9qZHlFqS5VuS0pd3qWjOIFQoeVksvjEvFXQq1O3Q1FA9qLck4Zc8Z2t8LgexV9Fq3i_Tk-8LSUnhfnzzzlcPejgimNKaCUuuZzCrobz7D1q3BLhUv3Ukt1YCF_GUfSUdKW4LH6VBY1QT79FhI2FNu-lVaz8iy4mWgsVN7QxAsFC2113zRFE6jRtcCp_CqKpw7XN4vq8Q-1s6YU49IMQVrayQ1bj0GM0bc8fIe5GbtljHWU2ACl6nHPk9o',
-                        'Secure enterprise data management.'),
-                        ('SQLite', 'sqlite',
-                        'https://lh3.googleusercontent.com/aida-public/AB6AXuAXP05sbYJ5jZ4EzyN-DpjqCVu2VsTNagcSilMnLFOPEOGPPm7Hk9B8Upo-_NghSTN3Vb5PzmVrOHAwwjH3rAUalmTHw4NG-HXWCTToVwQlbfwm_mgJM85RSr0UQKp0ITA--juu_83fHF8HLaenBlZMXNLlbK7KJFnstLPAkcHJMRu2cCM-_HOgZ14Db_taEg-MnxzMOHIvtjHHq3iX1_vz7NBJS1n1Yh-q8baR97YfU__WjDiXf7Ms7aemzqeczaeLmKW_SqOeiE9l0',
-                        'File-based SQLite for local storage.'),
-                        ('Snowflake', 'snowflake',
-                        'https://lh3.googleusercontent.com/aida-public/AB6AXuAcspQSWtqmLrRdU3-8qYA72Hmz-SaeiECP0IGPNxG0G-DGvVRQ-O9m1OFbgK4q8stUdMn4fjcD6njCaclWgAL0FJIxMmTMWBbglxDjisvVN3om8vm1UUqb9ISk4rMlrXaYu-i0Y2fVaJp8ZuWtwFAN-Djgi7r7s1efOscN-VnEOt-ubRiQioS3QR-FYyC2iN5gpoLp6LNZlgXRZn_UdRsjuVaouvmmbtIte9GLFCN9TZkeJFwt2uArg0_R_1LtGhjvRUAAeVYvoKMz',
-                        'Cloud data warehousing platform.'),
-                        ('BigQuery', 'bigquery',
-                        'https://lh3.googleusercontent.com/aida-public/AB6AXuCCyT_HDeBvdx0ywdvV0jxkyXKqlUY57xhRO8oHM5Vfr-2_XpquLQvY_NRzA57FZGysJ0ir4Y_SUlCjRqtoeOnOcSU_ZucG8R_ydnXLND09Tswvr1I9Gc9wkHWFxKRMl5rNgFWjFCIKDe_CuvEdqQw9EUzmJBi-b_6VI7et4nKLnHltgfTWuGFnXTX6XQYlyEgoPhHEozd3jUDjbOVAfRBbhdzdbixIXjKWy1_Iwaf73DzucVbkOZCn2Dt5ljgtYcGIjiljDfmrBOkU',
-                        'Google Cloud data warehouse.'),
-                        ('MongoDB', 'mongodb',
-                        'https://lh3.googleusercontent.com/aida-public/AB6AXuCir0mwU0NCjekF27q1hNNwiADrHFfMI-tb4HYQFh5ULOyyG3M-R3RI3xg_zD-tHrip44LD2VR79JY_1nohVLcgu88_IxNGuN11qYOttL3m9f6MlDfpD2EOISCqEjBF9VyBF-rcq4KOjHBp9dotqjGCN2RY_9yTlIzVWJ8y5hh_Xju9pGmInmkjqVy_g78M11bzFvYyvAif2RHJR6-I1Q63rZksGZtQ8-ktVsY3KttUJqf3QiKTsep76-PJA28oOLcjxiaqTRH8AqzG',
-                        'NoSQL document store.'),
-                        ('MariaDB', 'mariadb', 'http://googleusercontent.com/profile/picture/8', 'Community-developed
-                        SQL server.'),
-                        ('Clickhouse', 'clickhouse',
-                        'https://lh3.googleusercontent.com/aida-public/AB6AXuAXP05sbYJ5jZ4EzyN-DpjqCVu2VsTNagcSilMnLFOPEOGPPm7Hk9B8Upo-_NghSTN3Vb5PzmVrOHAwwjH3rAUalmTHw4NG-HXWCTToVwQlbfwm_mgJM85RSr0UQKp0ITA--juu_83fHF8HLaenBlZMXNLlbK7KJFnstLPAkcHJMRu2cCM-_HOgZ14Db_taEg-MnxzMOHIvtjHHq3iX1_vz7NBJS1n1Yh-q8baR97YfU__WjDiXf7Ms7aemzqeczaeLmKW_SqOeiE9l1',
-                        'Fast OLAP database system.'),
-                        ('Redshift', 'redshift', 'http://googleusercontent.com/profile/picture/7', 'AWS managed data
-                        warehouse.')
-                        ] %}
-                        {% for label, value, image, desc in db_types %}
-                        <div hx-get="/connections/new/{{ value }}" hx-target="#dynamic-content-area"
-                            hx-swap="innerHTML"
-                            class="db-type-card p-6 rounded-2xl border border-slate-100 hover:border-primary/30 transition-all cursor-pointer group shadow-sm bg-slate-50 hover:bg-white relative">
-
-                            <div
-                                class="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-all mb-4">
-                                <img class="w-8 h-8 object-contain" src="{{ image }}" />
-                            </div>
-                            <h4 class="font-bold text-slate-900 mb-1 tracking-tight">{{ label }}</h4>
-                            <p class="text-xs text-slate-500 leading-relaxed font-medium">{{ desc }}</p>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    </div>
-
-                    <!-- Footer Actions -->
-                    <div class="form-footer flex items-center justify-between pt-10 border-t border-slate-100">
-                        <a href="{{ url_for('endpoints.connections')}}">
-                            <button
-                                class="flex items-center gap-2 px-6 py-3.5 bg-slate-100 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-200 transition-all">
-                                <span class="material-symbols-outlined text-sm">arrow_back</span>
-                                Back to Connections
-                            </button>
-                        </a>
-
-                        <div class="flex items-center gap-6">
-                            <div class="hidden sm:flex flex-col items-end">
-                                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">System
-                                    Status</span>
-                                <span
-                                    class="text-[10px] font-bold text-primary flex items-center gap-1 uppercase tracking-widest">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
-                                    Auto-detecting Schema
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-            </form>
-
-        </main>
-    </div>
-
-    <!-- Feedback Toast -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    <div class="fixed bottom-10 left-1/2 -translate-x-1/2 w-full max-w-2xl px-6 z-[60] space-y-4">
-        {% for category, message in messages %}
-        <div class="bg-slate-900 border border-slate-800 text-white p-5 rounded-[2rem] shadow-2xl flex items-center gap-5 animate-in fade-in slide-in-from-bottom-5 duration-500"
-            id="flash-{{ loop.index }}">
-
-            <div
-                class="w-12 h-12 {% if category == 'error' %}bg-red-500/20 text-red-400{% else %}bg-primary/20 text-primary{% endif %} rounded-full flex items-center justify-center shrink-0 animate-pulse">
-                <span class="material-symbols-outlined">
-                    {% if category == 'error' %}report{% elif category == 'success' %}check_circle{% else %}lightbulb{%
-                    endif %}
+                <span class="text-2xl font-playful font-bold tracking-tight text-slate-900"
+                    style="font-family: 'Pacifico', cursive;">
+                    Spore
                 </span>
             </div>
 
-            <div class="flex-1">
-                <p
-                    class="text-sm font-bold {% if category == 'error' %}text-red-400{% else %}text-primary{% endif %} mb-0.5 font-headline">
+            <nav class=" md:flex items-center bg-black/5 rounded-full px-2 py-1 border border-black/5">
+                <a class="nav-link px-4 py-1.5 rounded-full text-xs font-medium transition-all hover:bg-white/50"
+                    href="/">
                     Mission Control
-                    <span class="font-script lowercase font-normal text-white ml-1">
-                        {% if category == 'error' %}Alert{% else %}Advice{% endif %}
-                    </span>
-                </p>
-                <p class="text-xs font-medium opacity-70 leading-relaxed font-sans">
-                    {{ message }}
-                </p>
+                </a>
+                <a class="nav-link nav-link-active px-4 py-1.5 rounded-full text-xs font-bold bg-emerald-600 shadow-sm"
+                    href="/connections">
+                    Connection Center
+                </a>
+                <a class="nav-link px-4 py-1.5 rounded-full text-xs font-medium transition-all hover:bg-white/50"
+                    href="/settings">
+                    Calibration
+                </a>
+            </nav>
+        </div>
+    </header>
+        <!-- Unified Sidebar -->
+
+        <!-- Main Wizard Content -->
+    <main class="max-w-7xl mx-auto w-full flex flex-col px-8 pt-24 pb-10 space-y-10"
+      x-data="{ 
+        search: '', 
+        activeTab: 'All',
+        matches(label, category) {
+            const s = this.search.toLowerCase();
+            const tabMatch = this.activeTab === 'All' || category.includes(this.activeTab);
+            const searchMatch = label.toLowerCase().includes(s);
+            return tabMatch && searchMatch;
+        },
+        categoryVisible(items, categoryName) {
+            // Checks if at least one item in the category matches the search/tab
+            return Object.values(items).some(cfg => this.matches(cfg.metadata.label, categoryName));
+        }
+      }">
+
+    <form id="sourceForm" action="{{ url_for('connections.registry') }}" method="POST"
+        enctype="multipart/form-data" @submit="loading = true">
+
+        <div id="dynamic-content-area" class="heavy-card p-8 bg-white relative overflow-hidden">
+            <!-- Header Section (Tightened) -->
+            <div class="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-8">
+                <div class="space-y-2">
+                    <nav class="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                        <span class="text-primary">Connect</span>
+                        <span class="material-symbols-outlined text-[10px]">chevron_right</span>
+                        <span>New Source</span>
+                    </nav>
+                    <h1 class="text-4xl font-black text-slate-900 tracking-tighter">
+                        Source <span class="font-script text-primary font-normal">Connectivity</span>
+                    </h1>
+                </div>
+                
+                <!-- Stepper (More compact) -->
+                <div class="flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100">
+                    <div class="flex gap-1.5">
+                        <div class="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(0,163,108,0.4)]"></div>
+                        <div class="w-2 h-2 rounded-full bg-slate-200"></div>
+                    </div>
+                    <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Step 1</span>
+                </div>
             </div>
 
-            <button onclick="document.getElementById('flash-{{ loop.index }}').remove()"
-                class="p-2 text-white/20 hover:text-white transition-colors">
-                <span class="material-symbols-outlined">close</span>
-            </button>
+            <!-- Search and Filter Bar -->
+            <div class="flex flex-col lg:flex-row gap-3 mb-8">
+                <div class="relative flex-1">
+                    <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+                    <input
+                        x-model="search"
+                        class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-primary/50 focus:ring-0 transition-all text-xs font-medium"
+                        placeholder="Search sources (e.g. Postgres)..." type="text" />
+                </div>
+                
+                <div class="flex bg-slate-100 p-1 rounded-xl shrink-0">
+                    {% for tab in ['All', 'Databases', 'Warehouse', 'APIs'] %}
+                    <button 
+                        type="button"
+                        @click="activeTab = '{{ tab }}'"
+                        :class="activeTab === '{{ tab }}' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-primary'"
+                        class="px-4 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wider transition-all">
+                        {{ tab }}
+                    </button>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Grid Area -->
+            <div class="max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                {% for category_name, items in source %}
+                <!-- Category Section -->
+                <div class="mb-8" x-show="categoryVisible({{ items | tojson | safe }}, '{{ category_name }}')" x-cloak>
+                    <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-3">
+                        {{ category_name }}
+                        <span class="h-[1px] flex-1 bg-slate-100"></span>
+                    </h3>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        {% for key, cfg in items.items() %}
+                        <div 
+                            x-show="matches('{{ cfg.metadata.label }}', '{{ category_name }}')"
+                            hx-get="/connections/new/{{ key }}" 
+                            hx-target="#dynamic-content-area"
+                            hx-swap="innerHTML"
+                            class="group relative p-4 rounded-xl border border-slate-100 bg-slate-50/50 transition-all duration-200 
+                                hover:bg-white hover:border-primary/40 hover:shadow-[0_20px_40px_-15px_rgba(0,163,108,0.1)] 
+                                active:scale-95 cursor-pointer overflow-hidden">
+
+                            <!-- Subtle background glow on hover -->
+                            <div class="absolute -right-4 -top-4 w-16 h-16 bg-primary/5 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+
+                            <div class="flex items-center gap-4">
+                                <!-- Icon Container -->
+                                <div class="relative z-10 w-10 h-10 shrink-0 bg-white rounded-lg flex items-center justify-center shadow-sm 
+                                            border border-slate-100 group-hover:border-primary/20 group-hover:shadow-md transition-all">
+                                    {% if cfg.metadata.image %}
+                                        <img class="w-6 h-6 object-contain group-hover: transition-all" 
+                                            src="{{ url_for('static', filename=cfg.metadata.image) }}" 
+                                            alt="{{ cfg.metadata.label }}" />
+                                    {% else %}
+                                        <div class="text-[10px] font-black text-slate-400 group-hover:text-primary transition-colors">
+                                            {{ cfg.metadata.label[:2] | upper }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Text Content -->
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="font-bold text-slate-900 text-sm tracking-tight group-hover:text-primary transition-colors truncate">
+                                        {{ cfg.metadata.label }}
+                                    </h4>
+                                    <!-- Optional: Added a tiny "action" hint -->
+                                    <div class="flex items-center gap-1 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
+                                        <span class="text-[9px] font-black uppercase tracking-widest text-primary">Select</span>
+                                        <span class="material-symbols-outlined text-[10px] text-primary">arrow_forward</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Footer (Slimmer) -->
+            <div class="flex items-center justify-between pt-6 mt-4 border-t border-slate-50">
+                <a href="{{ url_for('connections.connections')}}" class="text-[11px] font-bold text-slate-400 hover:text-primary transition-colors flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">west</span>
+                    Back
+                </a>
+                
+                <div class="flex items-center gap-4">
+                    <div class="flex flex-col items-end">
+                        <span class="text-[9px] font-bold text-primary flex items-center gap-1.5 uppercase tracking-widest">
+                            <span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+                            Engine Ready
+                        </span>
+                    </div>
+                </div>
+            </div>
         </div>
-        {% endfor %}
+    </form>
+</main>
+</div>
+
+    <div id="toast-container">
+        <div class="fixed bottom-10 left-1/2 -translate-x-1/2 w-full max-w-2xl px-6 z-[100] space-y-4">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+            <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)"
+                x-transition:enter="transition ease-out duration-500"
+                x-transition:enter-start="opacity-0 translate-y-8 scale-95"
+                x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                x-transition:leave="transition ease-in duration-300" x-transition:leave-start="opacity-100 scale-100"
+                x-transition:leave-end="opacity-0 scale-95"
+                class="bg-slate-900/95 backdrop-blur-xl border border-slate-800 text-white p-5 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] flex items-center gap-5">
+                <div class="w-12 h-12 rounded-full flex items-center justify-center shrink-0 relative">
+                    <div
+                        class="absolute inset-0 rounded-full animate-ping opacity-20 {% if category == 'error' %}bg-rose-500{% else %}bg-primary{% endif %}">
+                    </div>
+
+                    <div
+                        class="relative w-full h-full rounded-full flex items-center justify-center {% if category == 'error' %}bg-rose-500/20 text-rose-400{% else %}bg-primary/20 text-primary{% endif %}">
+                        <span class="material-symbols-outlined text-2xl">
+                            {% if category == 'error' %}rocket{% elif category == 'success' %}verified_user{% else %}info{%
+                            endif %}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-0.5">
+                        <p
+                            class="text-sm font-black uppercase tracking-widest {% if category == 'error' %}text-rose-400{% else %}text-primary{% endif %} font-headline">
+                            Mission Control
+                        </p>
+                        <span class="script-text text-white text-lg opacity-80 lowercase">
+                            {% if category == 'error' %}Anomaly{% else %}Update{% endif %}
+                        </span>
+                    </div>
+                    <p class="text-xs font-semibold text-slate-400 leading-relaxed">
+                        {{ message }}
+                    </p>
+                </div>
+
+                <button @click="show = false" class="group p-2 hover:bg-white/5 rounded-full transition-all">
+                    <span
+                        class="material-symbols-outlined text-slate-500 group-hover:text-white transition-colors">close</span>
+                </button>
+            </div>
+            {% endfor %}
+            {% endwith %}
+        </div>
     </div>
-    {% endif %}
-    {% endwith %}
 
 </body>
+<script>
+    function sporeToast(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+
+        const isError = type === 'error';
+        const el = document.createElement('div');
+        el.innerHTML = `
+            <div x-data="{ show: true }"
+                 x-show="show"
+                 x-init="setTimeout(() => show = false, 5000)"
+                 x-transition:enter="transition ease-out duration-500"
+                 x-transition:enter-start="opacity-0 translate-y-8 scale-95"
+                 x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                 x-transition:leave="transition ease-in duration-300"
+                 x-transition:leave-start="opacity-100 scale-100"
+                 x-transition:leave-end="opacity-0 scale-95"
+                 class="bg-slate-900/95 backdrop-blur-xl border border-slate-800 text-white p-5 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] flex items-center gap-5">
+                <div class="w-12 h-12 rounded-full flex items-center justify-center shrink-0 relative">
+                    <div class="absolute inset-0 rounded-full animate-ping opacity-20 ${isError ? 'bg-rose-500' : 'bg-emerald-500'}"></div>
+                    <div class="relative w-full h-full rounded-full flex items-center justify-center ${isError ? 'bg-rose-500/20 text-rose-400' : 'bg-emerald-500/20 text-emerald-400'}">
+                        <span class="material-symbols-outlined text-2xl">${isError ? 'rocket' : 'verified_user'}</span>
+                    </div>
+                </div>
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-0.5">
+                        <p class="text-sm font-black uppercase tracking-widest ${isError ? 'text-rose-400' : 'text-emerald-400'} font-headline">Mission Control</p>
+                        <span class="text-white text-lg opacity-80 lowercase" style="font-family:'Pacifico',cursive;">${isError ? 'Anomaly' : 'Update'}</span>
+                    </div>
+                    <p class="text-xs font-semibold text-slate-400 leading-relaxed">${message}</p>
+                </div>
+                <button @click="show = false" class="group p-2 hover:bg-white/5 rounded-full transition-all">
+                    <span class="material-symbols-outlined text-slate-500 group-hover:text-white transition-colors">close</span>
+                </button>
+            </div>
+        `;
+
+        container.appendChild(el.firstElementChild);
+        // Re-initialise Alpine on the new element
+        Alpine.initTree(container.lastElementChild);
+    }
+</script>
 
 </html>
