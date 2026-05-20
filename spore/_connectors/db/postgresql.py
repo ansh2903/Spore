@@ -265,7 +265,7 @@ class PostgreSQLSource(BaseSource):
                 cur    = conn.cursor()
                 schema = self.config.get("schema")
                 if schema:
-                    cur.execute("SET search_path TO %s;", (schema,))
+                    cur.execute(f"SET search_path TO {schema};")
 
                 try:
                     cur.execute(f"SELECT COUNT(*) FROM ({query.rstrip(';')}) AS _c")
@@ -291,8 +291,8 @@ class PostgreSQLSource(BaseSource):
         stream_name: str,
         query: str,
         destination_path: str | None = None,
-        memory_ceiling: str = "1GB",
-        batch_row_size: int = 10_000,
+        memory_ceiling: str = '1GB',
+        batch_row_size: int = 10000,
     ) -> tuple[str, str]:
         """
         True streaming ingest via DuckDB fetch_arrow_reader().
@@ -350,7 +350,7 @@ class PostgreSQLSource(BaseSource):
                 pg_uri += "?" + urllib.parse.urlencode(params)
 
             duck = duckdb.connect(":memory:")
-            duck.execute(f"SET memory_limit = '{memory_ceiling}';")
+            duck.execute(f"SET memory_limit = '1GB';")
             duck.execute("INSTALL postgres; LOAD postgres;")
             duck.execute(f"ATTACH '{pg_uri}' AS remote_db (TYPE POSTGRES);")
             duck.execute("USE remote_db;")
@@ -359,7 +359,8 @@ class PostgreSQLSource(BaseSource):
             if schema:
                 duck.execute(f"SET search_path = {_qi(schema)};")
 
-            reader     = duck.sql(query).fetch_arrow_reader(batch_row_size)
+# for now for demo just use dont think of a batch
+            reader = duck.sql(query).fetch_arrow_reader(1000)
             total_rows = 0
 
             for batch in reader:

@@ -31,6 +31,10 @@ ScalAble would not be possible without the open-source ecosystem and tools below
 - **[Tailwind CSS](https://tailwindcss.com/)**, **[Alpine.js](https://alpinejs.dev/)**, **[HTMX](https://htmx.org/)** — UI styling and interactivity
 - **[MathJax](https://www.mathjax.org/)** — Mathematical notation rendering
 
+## Foundations & Organizations
+
+- **[Apache Software Foundation](https://www.apache.org/)** — For Apache Arrow, ECharts, and championing the open-source data ecosystem
+
 ## Inspiration
 
 - Text-to-SQL research and datasets (e.g. Spider-style benchmarks) that shaped the NL→SQL approach

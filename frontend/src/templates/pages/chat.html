@@ -6,6 +6,21 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>ScalAble Studio | AI Chat &amp; Analysis</title>
     <script src="https://cdn.plot.ly/plotly-2.32.0.min.js" charset="utf-8"></script>
+    <script src="https://unpkg.com/@tanstack/table-core@8.11.2/build/umd/index.production.js"></script>
+        <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
+<script>
+    // Configure AMD loader to point to the Monaco CDN
+    require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
+    
+    // Global reference so we know when it's ready
+    window.monacoReady = new Promise(resolve => {
+        require(['vs/editor/editor.main'], function () {
+            resolve(window.monaco);
+        });
+    });
+</script>
     <link
         href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;family=Fredoka:wght@400;600;700&amp;family=Pacifico&amp;display=swap"
         rel="stylesheet" />
@@ -165,6 +180,7 @@
         .data-component tr:hover td {
             @apply bg-slate-50/80 text-slate-900;
         }
+        
     </style>
     <style>
         /* --- 1. LANDING STATE (Centered) --- */
@@ -222,6 +238,7 @@
         [data-view="split"] #resizer {
             display: block;
         }
+        /* Prevent vertical resizing of the monaco container */
     </style>
 </head>
 
@@ -675,11 +692,10 @@
     <script>
         window.SPORE_CONNECTIONS = {{ connections | tojson }};
     </script>
-    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-<script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
-<script src="{{ url_for('static', filename='js/sidepanel.js') }}"></script>
-<script src="{{ url_for('static', filename='js/MIME.js') }}"></script>
-<script src="{{ url_for('static', filename='js/notebook.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/sidepanel.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/MIME.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/notebook.js') }}"></script>
     <script>
         window.MathJax = {
             tex: {

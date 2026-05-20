@@ -17,19 +17,24 @@ class SessionKernel:
 
     def _inject_startup_config(self):
         BASE_STARTUP = """
-    try:
-        import plotly.io as pio
-        # 'plotly_mimetype' is the cleanest way to just get the raw JSON bundle
-        pio.renderers.default = "plotly_mimetype"
-    except ImportError:
-        pass
-    try:
-        pass
-        # import matplotlib
-        # matplotlib.use('Agg') 
-    except ImportError:
-        pass
-    """
+        try:
+            import sys
+            from IPython.core.display import display
+            
+            def custom_displayhook(value):
+                if value is None:
+                    return
+                # This triggers the automatic rendering of the last expression
+                display(value)
+                
+            sys.displayhook = custom_displayhook
+
+            # Existing plotly configuration
+            import plotly.io as pio
+            pio.renderers.default = "plotly_mimetype"
+        except Exception as e:
+            pass
+        """
         full_code = BASE_STARTUP + '\n' + self.user_startup_code
         for _ in self.execute(full_code):
             pass

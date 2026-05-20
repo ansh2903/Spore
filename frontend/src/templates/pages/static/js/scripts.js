@@ -57,8 +57,6 @@ sendMessageBtn.addEventListener('click', async () => {
         const message = messageInput.value.trim();
         if (!message) return;
 
-        switchToChatView();
-
         appendMessage('user', message);
         messageInput.value = '';
 
@@ -155,7 +153,6 @@ function triggerStreamConfig(base64Code, dbId, totalRows) {
 
 async function executeAnalysisStream(base64Code, dbId, totalRows, streamName) {
     const sql = decodeURIComponent(escape(atob(base64Code)));
-    switchToSplitView();
 
     const formData = new FormData();
     formData.append('query', sql);
@@ -163,7 +160,7 @@ async function executeAnalysisStream(base64Code, dbId, totalRows, streamName) {
     formData.append('stream_name', streamName); 
 
     try {
-        const response = await fetch('/materialize', { method: 'POST', body: formData });
+        const response = await fetch('/ingest', { method: 'POST', body: formData });
         const result = await response.json();
         
         if (result.status === 'success') {

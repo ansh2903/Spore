@@ -38,21 +38,33 @@ const MIME_RENDERERS = [
         </pre>`);
     }
   },
-  {
+{
     mimeType: 'text/html',
     priority: 50,
     render(data, container) {
-      // Use includes('<table>') instead of '<div>' to be more specific to dataframes
-      const isTable = data.includes('<table'); 
+      const isTable = /<table[\s\>]/i.test(data); 
       const componentId = `comp-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
       if (isTable) {
-          // Call the standalone functions directly without 'this'
-          container.insertAdjacentHTML('beforeend', buildDataShell(componentId));
-          
-          // Use a timeout or requestAnimationFrame to ensure the DOM has rendered the shell
-          // before we try to find the ID to inject the table
-          setTimeout(() => initializeSmartTable(data, componentId), 0);
+          // Check if your advanced component libraries are available in scope
+          if (typeof buildDataShell === 'function' && typeof initializeSmartTable === 'function') {
+              container.insertAdjacentHTML('beforeend', buildDataShell(componentId));
+              setTimeout(() => {
+                  try {
+                      initializeSmartTable(data, componentId);
+                  } catch (err) {
+                      console.error(`Spore Table Initializer Failure for ${componentId}:`, err);
+                  }
+              }, 0);
+          } else {
+              // Graceful local fallback: Inject data directly as scrollable, styled native markup
+              container.insertAdjacentHTML('beforeend', `
+                  <div class="p-3 border-t border-slate-100 overflow-x-auto max-w-full class-native-df">
+                      <div class="prose prose-sm font-sans max-w-none text-slate-700">
+                          ${data}
+                      </div>
+                  </div>`);
+          }
       } else {
           container.insertAdjacentHTML('beforeend', `
               <div class="p-4 border-t border-slate-100 prose prose-sm max-w-none">
@@ -60,9 +72,9 @@ const MIME_RENDERERS = [
               </div>`);
       }
     }
-  },
+  }, 
   {
-    mimeType: 'image/png',
+        mimeType: 'image/png',
     priority: 40,
     render(data, container) {
       container.insertAdjacentHTML('beforeend', `

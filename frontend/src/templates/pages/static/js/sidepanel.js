@@ -69,8 +69,8 @@ async function updateSchemaPanel(dbId) {
         // Fetch fresh metadata from your Flask backend
         const response = await fetch(`/api/metadata/${dbId}`);
         const data = await response.json();
-        
-        renderMetadata(data.metadata);
+        const actualMetadata = Array.isArray(data.metadata) ? data.metadata[1] : data.metadata;
+        renderMetadata(actualMetadata);
     } catch (err) {
         treeContainer.innerHTML = `<div class="text-[9px] text-red-400 text-center py-8 font-bold">Failed to load metadata</div>`;
     }
@@ -189,7 +189,7 @@ function renderFileRow(streamName, fileName, meta, isMutable) {
                 ${warning}
                 <span class="text-[9px] font-mono text-slate-300 opacity-0 group-hover/file:opacity-100">${meta.size_pretty}</span>
                 <div class="flex gap-1 opacity-0 group-hover/file:opacity-100">
-                    <button class="text-slate-400 hover:text-primary p-0.5" onclick="copyPath('src/temp/${streamName}/${fileName}')" title="Copy Path">
+                    <button class="text-slate-400 hover:text-primary p-0.5" onclick="copyPath('data/streams/${streamName}/${fileName}')" title="Copy Path">
                         <span class="material-symbols-outlined text-[13px]">link</span>
                     </button>
                 </div>

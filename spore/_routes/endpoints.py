@@ -1,7 +1,6 @@
 from flask import Blueprint, stream_with_context, render_template, Response, jsonify, request, session, redirect, url_for, flash, current_app
 import importlib
 
-from spore._connectors.connector import DatabaseConnector
 from spore._engine.model_manager import get_engine, reset_engine
 from spore._engine.query_executor import run_query
 from spore._utils import file_size_fmt, model_ls, encrypt_creds, downloadable_json, downloadable_excel, downloadable_csv, load_settings, save_settings, is_running_in_docker
@@ -20,7 +19,6 @@ from spore._exception import CustomException
 from spore._logger import logging
 
 endpoints_blueprint = Blueprint('endpoints', __name__)
-
 
 # ---------------------------------------------------------------------------------
 # chat interface
