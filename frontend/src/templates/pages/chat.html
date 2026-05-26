@@ -7,20 +7,20 @@
     <title>ScalAble Studio | AI Chat &amp; Analysis</title>
     <script src="https://cdn.plot.ly/plotly-2.32.0.min.js" charset="utf-8"></script>
     <script src="https://unpkg.com/@tanstack/table-core@8.11.2/build/umd/index.production.js"></script>
-        <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
-<script>
-    // Configure AMD loader to point to the Monaco CDN
-    require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
-    
-    // Global reference so we know when it's ready
-    window.monacoReady = new Promise(resolve => {
-        require(['vs/editor/editor.main'], function () {
-            resolve(window.monaco);
+    <script>
+        // Configure AMD loader to point to the Monaco CDN
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
+
+        // Global reference so we know when it's ready
+        window.monacoReady = new Promise(resolve => {
+            require(['vs/editor/editor.main'], function () {
+                resolve(window.monaco);
+            });
         });
-    });
-</script>
+    </script>
     <link
         href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;family=Fredoka:wght@400;600;700&amp;family=Pacifico&amp;display=swap"
         rel="stylesheet" />
@@ -238,6 +238,7 @@
         [data-view="split"] #resizer {
             display: block;
         }
+
         /* Prevent vertical resizing of the monaco container */
     </style>
 </head>
@@ -259,14 +260,13 @@
                     </svg>
                 </div>
                 <a href="/">
-                <span class="text-2xl font-playful font-bold tracking-tight text-slate-900"
-                    style="font-family: 'Pacifico', cursive;">
-                    Spore
-                </span>
+                    <span class="text-2xl font-playful font-bold tracking-tight text-slate-900"
+                        style="font-family: 'Pacifico', cursive;">
+                        Spore
+                    </span>
                 </a>
             </div>
-
-
+            <h1 class="text-2xl font-black text-slate-900 tracking-tighter">Workspace</h1>
         </div>
         <div class="flex items-center gap-4">
             <div class="flex items-center gap-3 bg-white border border-slate-200 px-3 py-1 rounded-lg mr-2">
@@ -286,7 +286,6 @@
     </header>
 
     <aside id="sidebar" class="fixed left-0 top-0 h-screen z-40">
-
         <!-- Icon Rail -->
         <div
             class="w-14 h-full flex flex-col items-center py-3 gap-1 border-r border-slate-100 bg-white pt-20 relative z-10">
@@ -313,11 +312,11 @@
 
             <div class="mt-auto flex flex-col items-center gap-1 w-full border-t border-slate-100 pt-2">
                 <a href="/settings">
-                <button
-                    class="w-9 h-9 flex items-center justify-center rounded-lg text-slate-300 hover:text-slate-500 transition-all relative group/tip">
-                    <span class="material-symbols-outlined text-[19px]">settings</span>
-                    <span class="sidebar-tip">Settings</span>
-                </button>
+                    <button
+                        class="w-9 h-9 flex items-center justify-center rounded-lg text-slate-300 hover:text-slate-500 transition-all relative group/tip">
+                        <span class="material-symbols-outlined text-[19px]">settings</span>
+                        <span class="sidebar-tip">Settings</span>
+                    </button>
                 </a>
                 <button
                     class="w-9 h-9 flex items-center justify-center rounded-lg text-slate-300 hover:text-slate-500 transition-all relative group/tip">
@@ -469,125 +468,633 @@
     </aside>
 
     <main id="app-viewport" class="ml-16 pt-16 h-screen flex overflow-hidden">
-        <!-- Notebook Split -->
-        <section id="notebook-panel"
+        <!-- Workspace Split -->
+        <section id="workspace-panel"
             class="h-full bg-slate-50 flex-1 bg-transparent flex flex-col overflow-hidden relative">
-            <div class="w-full px-6 py-2 bg-white border-b border-slate-200 flex items-center justify-between shrink-0">
-                <div class="flex items-center gap-2">
-                    <button
-                        class="flex items-center gap-1.5 px-4 py-1.5 bg-primary text-white text-[10px] font-black rounded shadow-tactile hover:opacity-90 transition-all uppercase">
-                        <span class="material-symbols-outlined text-sm">database</span> DATA
-                    </button>
-                    <button
-                        class="flex items-center gap-1.5 px-4 py-1.5 bg-slate-900 text-white text-[10px] font-black rounded shadow-tactile hover:opacity-90 transition-all uppercase">
-                        <span class="material-symbols-outlined text-sm">analytics</span> ANALYZE
-                    </button>
-                    <button
-                        class="flex items-center gap-1.5 px-4 py-1.5 bg-white border border-slate-200 text-slate-700 text-[10px] font-black rounded shadow-sm hover:border-primary/30 transition-all uppercase">
-                        <span class="material-symbols-outlined text-sm">file_export</span> EXPORT
-                    </button>
+            <div
+                class="w-full px-6 py-2.5 bg-white border-b border-slate-200 flex items-center justify-between shrink-0">
+
+                <!-- Mode dial -->
+                <div class="flex items-center gap-3">
+                    <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">View</span>
+
+                    <div
+                        class="inline-flex items-center h-8 rounded-pill bg-slate-50 border border-slate-200 p-0.5 gap-0.5 shadow-inner">
+                        <button onclick="openDataPanel()" data-view="data" class="view-tab inline-flex items-center gap-1.5 h-full px-3 rounded-pill
+                        bg-primary text-white text-[10px] font-black uppercase tracking-widest shadow-tactile">
+                            <span class="material-symbols-outlined text-[14px]">database</span> Data
+                        </button>
+                        <button onclick="openNotebookPanel()" data-view="analyze" class="view-tab inline-flex items-center gap-1.5 h-full px-3 rounded-pill
+                    text-slate-500 hover:text-slate-900 hover:bg-white transition-colors
+                    text-[10px] font-black uppercase tracking-widest">
+                            <span class="material-symbols-outlined text-[14px]">analytics</span> Notebook
+                        </button>
+                        <button onclick="openDashboardPanel()" data-view="dashboard" class="view-tab inline-flex items-center gap-1.5 h-full px-3 rounded-pill
+                                   text-slate-500 hover:text-slate-900 hover:bg-white transition-colors
+                                   text-[10px] font-black uppercase tracking-widest">
+                            <span class="material-symbols-outlined text-[14px]">dashboard</span> Dashboard
+                        </button>
+                        <button onclick="openExportPanel()" data-view="export" class="view-tab inline-flex items-center gap-1.5 h-full px-3 rounded-pill
+                                   text-slate-500 hover:text-slate-900 hover:bg-white transition-colors
+                                   text-[10px] font-black uppercase tracking-widest">
+                            <span class="material-symbols-outlined text-[14px]">file_export</span> Export
+                        </button>
+                    </div>
                 </div>
 
-                <div class="flex items-center gap-3">
-
-                    <button class="flex items-center gap-1.5">
-                        <span class="material-symbols-outlined text-[14px] text-slate-400">restart_alt</span>
-                    </button>
-
-                    <div class="flex items-center gap-1">
-                        <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest mr-1">Kernel:</span>
-                        <select
-                            class="text-[10px] font-black text-slate-700 bg-slate-50 border-slate-200 rounded px-2 py-1 focus:ring-primary focus:border-primary">
-                            <option>Python 3.10</option>
-                            <option>Restart Kernel</option>
-                            <option>Change Kernel</option>
-                            <option>Interrupt Kernel</option>
-                        </select>
-                    </div>
-                    <button
-                        class="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded text-[10px] font-black text-slate-600 hover:text-primary transition-all">
-                        <span class="material-symbols-outlined text-sm">download</span> DOWNLOAD NB
-                    </button>
+                <!-- Connection chip (mirrors the vital pills below) -->
+                <div class="flex items-center gap-2">
+                    <select id="selected_db_id" name="selected_db_id"
+                        class="bg-transparent border-none p-0 text-[10px] font-black text-slate-600 focus:ring-0 cursor-pointer uppercase tracking-tight">
+                        <option value="" disabled selected>Select Context</option>
+                        {% for conn in connections %}
+                        <option value="{{ conn.id }}">{{ conn.db_type }} - {{ conn.display_name or conn.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
                 </div>
             </div>
-            <header class="px-6 py-3 flex items-center justify-between shrink-0">
-                <div class="flex items-center gap-3">
-                    <div class="p-1.5 bg-primary-soft organic-border text-primary shadow-sm">
-                        <span class="material-symbols-outlined text-lg">description</span>
+
+            <div id="dataPanel" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <header class="px-6 py-3 flex items-center justify-between shrink-0 border-b border-slate-200/70
+               bg-[radial-gradient(circle_at_1px_1px,_rgba(0,163,108,0.06)_1px,_transparent_0)]
+               [background-size:14px_14px]">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-pill bg-primary-soft border border-primary/20 flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-primary text-[18px]">science</span>
+                        </div>
+                        <div>
+                            <h1 class="text-base font-black text-slate-900 tracking-tight leading-tight">
+                                Postgres_Prod<span class="font-mono font-medium text-slate-400">.pg</span>
+                            </h1>
+                            <div class="flex items-center gap-1.5 mt-1 flex-wrap">
+                                <span class="inline-flex items-center gap-1.5 h-5 px-2 rounded-pill bg-white border border-slate-200 text-[9px] font-black uppercase tracking-widest text-slate-500">
+                                    <span class="w-1.5 h-1.5 rounded-pill bg-primary animate-pulse"></span>
+                                    Source <span class="font-mono text-slate-900 ml-0.5">PG · 5432</span>
+                                </span>
+                                <span class="inline-flex items-center gap-1.5 h-5 px-2 rounded-pill bg-primary-soft border border-primary/20 text-[9px] font-black uppercase tracking-widest text-primary-dark">
+                                    Schema <span class="font-mono ml-0.5">public</span>
+                                </span>
+                                <span class="inline-flex items-center gap-1.5 h-5 px-2 rounded-pill bg-primary-soft border border-primary/20 text-[9px] font-black uppercase tracking-widest text-primary-dark">
+                                    Mode <span class="font-mono ml-0.5">Query</span>
+                                </span>
+                            </div>
+                        </div>
                     </div>
+                    <div class="flex items-center gap-2">
+                        <div class="inline-flex items-center h-8 rounded-pill border border-slate-200 bg-white overflow-hidden shadow-sm">
+                            <button type="button" title="Refresh metadata"
+                                class="px-2.5 h-full flex items-center text-slate-500 hover:text-primary hover:bg-primary-soft transition-colors">
+                                <span class="material-symbols-outlined text-[16px]">refresh</span>
+                            </button>
+                            <span class="w-px h-4 bg-slate-200"></span>
+                            <button type="button" title="Disconnect"
+                                class="px-2.5 h-full flex items-center text-slate-500 hover:text-red-500 hover:bg-red-50 transition-colors">
+                                <span class="material-symbols-outlined text-[16px]">link_off</span>
+                            </button>
+                        </div>
+                        <button type="button"
+                            class="inline-flex items-center gap-1.5 h-8 px-3 rounded-pill bg-white border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-primary hover:border-primary/40 transition-all">
+                            Sample <span class="font-mono">100</span>
+                        </button>
+                    </div>
+                </header>
+
+                <div class="flex flex-1 min-h-0 overflow-hidden">
+                    <aside class="w-[40%] min-w-[220px] border-r border-slate-200 flex flex-col bg-white shrink-0">
+                        <div class="p-3 border-b border-slate-100">
+                            <label class="inline-flex items-center w-full h-8 rounded-pill border border-slate-200 bg-slate-50 px-2.5 gap-1.5">
+                                <span class="material-symbols-outlined text-[14px] text-slate-400">search</span>
+                                <input type="text" placeholder="Search tables…"
+                                    class="flex-1 bg-transparent border-0 text-[11px] font-mono text-slate-700 placeholder:text-slate-400 focus:ring-0 focus:outline-none p-0" />
+                            </label>
+                        </div>
+                        <div class="flex-1 overflow-y-auto p-2 space-y-0.5 scrollbar-thin text-[11px]">
+                            <div class="flex items-center gap-1.5 px-2 py-1.5 font-black text-slate-700 uppercase tracking-widest text-[9px]">
+                                <span class="material-symbols-outlined text-[14px] text-primary">folder_open</span>
+                                public
+                            </div>
+                            <div class="group/schema pl-4">
+                                <div class="flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-50 cursor-pointer">
+                                    <div class="flex items-center gap-1.5 min-w-0">
+                                        <span class="material-symbols-outlined text-[14px] text-slate-400">table</span>
+                                        <span class="font-mono text-slate-800 truncate">events</span>
+                                        <span class="text-[9px] text-slate-400 font-mono shrink-0">1.2M</span>
+                                    </div>
+                                    <button type="button"
+                                        class="opacity-0 group-hover/schema:opacity-100 inline-flex h-5 px-1.5 rounded-pill border border-slate-200 bg-white text-[8px] font-black uppercase text-primary transition-opacity">
+                                        + Use
+                                    </button>
+                                </div>
+                                <div class="pl-6 space-y-0.5 pb-1">
+                                    <div class="flex justify-between px-2 py-0.5 font-mono text-slate-600"><span>id</span><span class="text-slate-400">int4</span></div>
+                                    <div class="flex justify-between px-2 py-0.5 font-mono text-slate-600"><span>user_id</span><span class="text-slate-400">uuid</span></div>
+                                    <div class="flex justify-between px-2 py-0.5 font-mono text-slate-600"><span>country</span><span class="text-slate-400">varchar</span></div>
+                                    <div class="flex justify-between px-2 py-0.5 font-mono text-slate-600"><span>created_at</span><span class="text-slate-400">timestamptz</span></div>
+                                </div>
+                            </div>
+                            <div class="group/schema pl-4">
+                                <div class="flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-50 cursor-pointer">
+                                    <div class="flex items-center gap-1.5 min-w-0">
+                                        <span class="material-symbols-outlined text-[14px] text-slate-400">table</span>
+                                        <span class="font-mono text-slate-800 truncate">users</span>
+                                        <span class="text-[9px] text-slate-400 font-mono shrink-0">84K</span>
+                                    </div>
+                                    <button type="button"
+                                        class="opacity-0 group-hover/schema:opacity-100 inline-flex h-5 px-1.5 rounded-pill border border-slate-200 bg-white text-[8px] font-black uppercase text-primary transition-opacity">
+                                        + Use
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="group/schema pl-4">
+                                <div class="flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-50 cursor-pointer">
+                                    <div class="flex items-center gap-1.5 min-w-0">
+                                        <span class="material-symbols-outlined text-[14px] text-slate-400">table</span>
+                                        <span class="font-mono text-slate-800 truncate">cohorts</span>
+                                        <span class="text-[9px] text-slate-400 font-mono shrink-0">12K</span>
+                                    </div>
+                                    <button type="button"
+                                        class="opacity-0 group-hover/schema:opacity-100 inline-flex h-5 px-1.5 rounded-pill border border-slate-200 bg-white text-[8px] font-black uppercase text-primary transition-opacity">
+                                        + Use
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="px-3 py-2 border-t border-slate-100 text-[9px] font-mono text-slate-400 shrink-0">
+                            metadata refreshed 2m ago
+                        </p>
+                    </aside>
+
+                    <div class="flex-1 flex flex-col min-w-0 bg-slate-50/50">
+                        <div class="px-4 py-2 border-b border-slate-200 bg-white flex items-center justify-between shrink-0">
+                            <div class="inline-flex items-center h-8 rounded-pill bg-slate-50 border border-slate-200 p-0.5 gap-0.5 shadow-inner">
+                                <button type="button" onclick="setDataTab('query')" data-tab="query"
+                                    class="data-work-tab inline-flex items-center h-full px-3 rounded-pill bg-primary text-white text-[10px] font-black uppercase tracking-widest shadow-tactile">
+                                    Query
+                                </button>
+                                <button type="button" onclick="setDataTab('preview')" data-tab="preview"
+                                    class="data-work-tab inline-flex items-center h-full px-3 rounded-pill text-slate-500 hover:text-slate-900 hover:bg-white transition-colors text-[10px] font-black uppercase tracking-widest">
+                                    Preview
+                                </button>
+                                <button type="button" onclick="setDataTab('filters')" data-tab="filters"
+                                    class="data-work-tab inline-flex items-center h-full px-3 rounded-pill text-slate-500 hover:text-slate-900 hover:bg-white transition-colors text-[10px] font-black uppercase tracking-widest">
+                                    Filters
+                                </button>
+                            </div>
+                            <div id="data-tab-query-actions" class="flex items-center gap-1.5">
+                                <button type="button"
+                                    class="inline-flex items-center h-7 px-2.5 rounded-pill border border-slate-200 bg-white text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-primary transition-colors">
+                                    Format
+                                </button>
+                                <button type="button"
+                                    class="inline-flex items-center h-7 px-2.5 rounded-pill border border-slate-200 bg-white text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-primary transition-colors">
+                                    Explain
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="flex-1 overflow-hidden p-4 min-h-0">
+                            <div id="data-tab-query" class="h-full flex flex-col">
+                                <div class="flex-1 min-h-[200px] rounded-xl overflow-hidden border border-slate-800 bg-slate-900 flex font-mono text-[12px] text-slate-100">
+                                    <div class="w-10 shrink-0 bg-slate-950 text-slate-500 text-right py-3 pr-2 select-none leading-relaxed border-r border-slate-800">
+                                        <div>1</div><div>2</div><div>3</div>
+                                    </div>
+                                    <pre class="flex-1 p-3 overflow-auto leading-relaxed whitespace-pre-wrap"><code>SELECT *
+FROM events
+WHERE created_at &gt; now() - interval '30 days'
+LIMIT 1000;</code><span class="inline-block w-2 h-4 bg-primary animate-pulse align-middle ml-0.5"></span></pre>
+                                </div>
+                            </div>
+
+                            <div id="data-tab-preview" class="hidden h-full flex flex-col">
+                                <div class="flex items-center gap-2 mb-2 shrink-0">
+                                    <span class="inline-flex items-center h-5 px-2 rounded-pill bg-white border border-slate-200 text-[9px] font-black uppercase tracking-widest text-slate-500 font-mono">
+                                        1,000 rows · 5 cols · 12 ms
+                                    </span>
+                                </div>
+                                <div class="flex-1 overflow-auto rounded-xl border border-slate-200 bg-white scrollbar-thin">
+                                    <table class="w-full text-left text-[11px] font-mono">
+                                        <thead class="sticky top-0 bg-slate-50 border-b border-slate-200">
+                                            <tr>
+                                                <th class="px-3 py-2 font-black text-slate-500 uppercase tracking-widest text-[9px]">id</th>
+                                                <th class="px-3 py-2 font-black text-slate-500 uppercase tracking-widest text-[9px]">user_id</th>
+                                                <th class="px-3 py-2 font-black text-slate-500 uppercase tracking-widest text-[9px]">country</th>
+                                                <th class="px-3 py-2 font-black text-slate-500 uppercase tracking-widest text-[9px]">event_type</th>
+                                                <th class="px-3 py-2 font-black text-slate-500 uppercase tracking-widest text-[9px]">created_at</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="text-slate-700">
+                                            <tr class="border-b border-slate-100 hover:bg-primary-soft/30"><td class="px-3 py-1.5">10482</td><td class="px-3 py-1.5">a1b2-…</td><td class="px-3 py-1.5">IN</td><td class="px-3 py-1.5">signup</td><td class="px-3 py-1.5">2026-05-01</td></tr>
+                                            <tr class="border-b border-slate-100 hover:bg-primary-soft/30"><td class="px-3 py-1.5">10483</td><td class="px-3 py-1.5">c3d4-…</td><td class="px-3 py-1.5">US</td><td class="px-3 py-1.5">purchase</td><td class="px-3 py-1.5">2026-05-02</td></tr>
+                                            <tr class="border-b border-slate-100 hover:bg-primary-soft/30"><td class="px-3 py-1.5">10484</td><td class="px-3 py-1.5">e5f6-…</td><td class="px-3 py-1.5">DE</td><td class="px-3 py-1.5">view</td><td class="px-3 py-1.5">2026-05-03</td></tr>
+                                            <tr class="border-b border-slate-100 hover:bg-primary-soft/30"><td class="px-3 py-1.5">10485</td><td class="px-3 py-1.5">g7h8-…</td><td class="px-3 py-1.5">IN</td><td class="px-3 py-1.5">signup</td><td class="px-3 py-1.5">2026-05-04</td></tr>
+                                            <tr class="hover:bg-primary-soft/30"><td class="px-3 py-1.5">10486</td><td class="px-3 py-1.5">i9j0-…</td><td class="px-3 py-1.5">GB</td><td class="px-3 py-1.5">purchase</td><td class="px-3 py-1.5">2026-05-05</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div id="data-tab-filters" class="hidden h-full flex flex-col justify-start pt-2">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="inline-flex items-center gap-1 h-7 pl-2 pr-1 rounded-pill bg-white border border-slate-200 text-[10px] font-mono text-slate-700">
+                                        country = "IN"
+                                        <button type="button" class="w-5 h-5 flex items-center justify-center rounded-pill hover:bg-slate-100 text-slate-400">
+                                            <span class="material-symbols-outlined text-[12px]">close</span>
+                                        </button>
+                                    </span>
+                                    <span class="inline-flex items-center gap-1 h-7 pl-2 pr-1 rounded-pill bg-white border border-slate-200 text-[10px] font-mono text-slate-700">
+                                        created_at &gt; '2026-04-01'
+                                        <button type="button" class="w-5 h-5 flex items-center justify-center rounded-pill hover:bg-slate-100 text-slate-400">
+                                            <span class="material-symbols-outlined text-[12px]">close</span>
+                                        </button>
+                                    </span>
+                                    <span class="inline-flex items-center gap-1 h-7 pl-2 pr-1 rounded-pill bg-primary-soft border border-primary/20 text-[10px] font-mono text-primary-dark">
+                                        event_type IN ('signup', 'purchase')
+                                        <button type="button" class="w-5 h-5 flex items-center justify-center rounded-pill hover:bg-primary/10 text-primary">
+                                            <span class="material-symbols-outlined text-[12px]">close</span>
+                                        </button>
+                                    </span>
+                                    <button type="button"
+                                        class="inline-flex items-center h-7 px-3 rounded-pill border-2 border-dashed border-slate-300 text-[9px] font-black uppercase tracking-widest text-slate-400 hover:border-primary/40 hover:text-primary transition-colors">
+                                        + Filter
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 border-y border-slate-200 px-6 py-2 flex items-center justify-between gap-4 shrink-0">
+                    <span class="text-[9px] font-black uppercase tracking-widest text-slate-400 font-mono">
+                        Relations · <span class="text-slate-700">3 pulled</span> · 12.4 MB
+                    </span>
+                    <div class="flex items-center gap-2 flex-wrap justify-end">
+                        <span class="inline-flex items-center gap-1 h-7 pl-2 pr-1 rounded-pill bg-white border border-slate-200 text-[10px] font-mono text-slate-700">
+                            <span class="material-symbols-outlined text-[14px] text-primary">database</span>
+                            events_30d
+                            <button type="button" class="w-6 h-6 flex items-center justify-center rounded-pill hover:bg-primary-soft text-slate-400 hover:text-primary" title="Open in notebook">
+                                <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+                            </button>
+                        </span>
+                        <span class="inline-flex items-center gap-1 h-7 pl-2 pr-1 rounded-pill bg-white border border-slate-200 text-[10px] font-mono text-slate-700">
+                            <span class="material-symbols-outlined text-[14px] text-primary">database</span>
+                            cohorts_q3
+                            <button type="button" class="w-6 h-6 flex items-center justify-center rounded-pill hover:bg-primary-soft text-slate-400 hover:text-primary" title="Open in notebook">
+                                <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+                            </button>
+                        </span>
+                        <span class="inline-flex items-center gap-1 h-7 pl-2 pr-1 rounded-pill bg-white border border-slate-200 text-[10px] font-mono text-slate-700">
+                            <span class="material-symbols-outlined text-[14px] text-primary">database</span>
+                            dau_breakdown
+                            <button type="button" class="w-6 h-6 flex items-center justify-center rounded-pill hover:bg-primary-soft text-slate-400 hover:text-primary" title="Open in notebook">
+                                <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+                            </button>
+                        </span>
+                        <button type="button" class="w-7 h-7 flex items-center justify-center rounded-pill border border-slate-200 bg-white text-slate-400 hover:text-primary" title="Expand relations">
+                            <span class="material-symbols-outlined text-[16px]">expand_more</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-200 bg-white px-6 py-3 flex items-center justify-between gap-4 shrink-0">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="inline-flex items-center h-8 px-2.5 rounded-pill bg-slate-900 text-white text-[9px] font-black uppercase tracking-widest">
+                            Materialize
+                        </span>
+                        <label class="inline-flex items-center h-8 rounded-pill border border-slate-200 bg-slate-50 pl-2.5 pr-2 gap-1.5">
+                            <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">Stream</span>
+                            <input type="text" value="stream_events_30d"
+                                class="w-36 bg-transparent border-0 font-mono text-[11px] text-slate-800 focus:ring-0 focus:outline-none p-0" />
+                        </label>
+                        <label class="inline-flex items-center h-8 rounded-pill border border-slate-200 bg-slate-50 pl-2.5 pr-2 gap-1.5">
+                            <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">Limit</span>
+                            <input type="text" value="1000"
+                                class="w-16 bg-transparent border-0 font-mono text-[11px] text-slate-800 focus:ring-0 focus:outline-none p-0" />
+                        </label>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button"
+                            class="inline-flex items-center gap-1.5 h-8 px-3 rounded-pill bg-white border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-primary hover:border-primary/40 transition-all">
+                            Preview
+                        </button>
+                        <button type="button"
+                            class="inline-flex items-center gap-1.5 h-8 px-4 rounded-pill bg-primary text-white text-[10px] font-black uppercase tracking-widest shadow-tactile hover:translate-y-[-1px] transition-all">
+                            <span class="material-symbols-outlined text-[14px]">download</span>
+                            Pull to Local Volume
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="notebookPanel" class="hidden flex flex-col flex-1 min-h-0 overflow-hidden">
+                <header class="px-6 py-3 flex items-center justify-between shrink-0 border-b border-slate-200/70
+               bg-[radial-gradient(circle_at_1px_1px,_rgba(0,163,108,0.06)_1px,_transparent_0)]
+               [background-size:14px_14px]">
+
+                    <div class="flex items-center gap-3">
+                        <div>
+                            <h1 class="text-base font-black text-slate-900 tracking-tight leading-tight">
+                                Retention_Cohort_Analysis_v4<span
+                                    class="font-mono font-medium text-slate-400">.ipynb</span>
+                            </h1>
+                            <div class="flex items-center gap-1.5 mt-1">
+                                <span class="inline-flex items-center gap-1.5 h-5 px-2 rounded-pill
+                     bg-white border border-slate-200 text-[9px] font-black uppercase tracking-widest text-slate-500">
+                                    <span class="w-1.5 h-1.5 rounded-pill bg-primary animate-pulse"></span>
+                                    Kernel <span class="font-mono text-slate-900 ml-0.5">PY 3.10</span>
+                                </span>
+
+                                <span
+                                    class="inline-flex items-center gap-1.5 h-5 px-2 rounded-pill
+                     bg-primary-soft border border-primary/20 text-[9px] font-black uppercase tracking-widest text-primary-dark">
+                                    <span class="w-1.5 h-1.5 rounded-pill bg-primary"></span>
+                                    Status <span class="font-mono ml-0.5">Nominal</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <div
+                            class="inline-flex items-center h-8 rounded-pill border border-slate-200 bg-white overflow-hidden shadow-sm">
+                            <button onclick="restartKernel()" title="Restart kernel"
+                                class="px-2.5 h-full flex items-center text-slate-500 hover:text-primary hover:bg-primary-soft transition-colors">
+                                <span class="material-symbols-outlined text-[16px]">restart_alt</span>
+                            </button>
+                            <span class="w-px h-4 bg-slate-200"></span>
+                            <button onclick="interruptKernel()" title="Interrupt"
+                                class="px-2.5 h-full flex items-center text-slate-500 hover:text-red-500 hover:bg-red-50 transition-colors">
+                                <span class="material-symbols-outlined text-[16px]">stop</span>
+                            </button>
+                        </div>
+
+                        <label class="inline-flex items-center h-8 rounded-pill border border-slate-200 bg-white pl-2.5 pr-1
+                  text-[10px] font-black uppercase tracking-widest text-slate-500">
+                            <span class="material-symbols-outlined text-[14px] text-slate-400 mr-1">memory</span>
+                            Kernel
+                            <select class="ml-1.5 bg-transparent border-0 text-slate-900 font-mono text-[11px]
+                     focus:ring-0 focus:outline-none pr-5">
+                                <option>Python 3.10</option>
+                            </select>
+                        </label>
+
+                        <button
+                            class="inline-flex items-center gap-1.5 h-8 px-3 rounded-pill bg-white border border-slate-200
+                   text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-primary hover:border-primary/40 transition-all">
+                            <span class="material-symbols-outlined text-[14px]">download</span> Notebook
+                        </button>
+
+                        <button class="inline-flex items-center gap-1.5 h-8 px-4 rounded-pill bg-primary text-white
+                   text-[10px] font-black uppercase tracking-widest shadow-tactile
+                   hover:translate-y-[-1px] transition-all">
+                            <span class="material-symbols-outlined text-[14px]"
+                                style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+                            Run All
+                        </button>
+                    </div>
+                </header>
+
+                <div class="flex-1 overflow-y-auto px-6 pb-6 space-y-3 scrollbar-thin">
+
+                    <div id="notebook-cells" class="flex-1 overflow-y-auto px-6 pb-6 space-y-3 scrollbar-thin">
+                        <!-- Cells injected here dynamically -->
+                    </div>
+
+                    <!-- Add Cell Buttons -->
+                    <div class="px-6 py-2 shrink-0 flex gap-2">
+                        <button onclick="addCell('sql')"
+                            class="flex-1 border-2 border-dashed border-primary/30 hover:border-primary text-primary text-[10px] font-black uppercase tracking-widest py-2 rounded-xl transition-all">
+                            + SQL CELL
+                        </button>
+                        <button onclick="addCell('python')"
+                            class="flex-1 border-2 border-dashed border-slate-200 hover:border-primary/40 text-slate-400 hover:text-primary text-[10px] font-black uppercase tracking-widest py-2 rounded-xl transition-all">
+                            + PYTHON CELL
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+
+            <div id="dashboardPanel" class="hidden flex flex-col flex-1 min-h-0 overflow-hidden">
+                <header class="px-6 py-3 flex items-center justify-between shrink-0 border-b border-slate-200/70
+               bg-[radial-gradient(circle_at_1px_1px,_rgba(0,163,108,0.06)_1px,_transparent_0)]
+               [background-size:14px_14px]">
                     <div>
-                        <h1 class="text-lg font-black text-slate-900 tracking-tighter">
-                            Retention_Cohort_Analysis_v4.ipynb</h1>
-                        <div class="flex items-center gap-2 mt-0.5">
-                            <span
-                                class="text-[8px] font-black text-white bg-slate-900 px-1.5 py-0.5 rounded uppercase tracking-widest">Active:
-                                Python 3.10</span>
-                            <span
-                                class="text-[8px] font-black text-primary bg-primary-soft px-1.5 py-0.5 rounded uppercase tracking-widest">System
-                                Nominal</span>
+                        <h1 class="text-base font-black text-slate-900 tracking-tight leading-tight">
+                            Dashboard_Untitled_01<span class="font-mono font-medium text-slate-400">.dash</span>
+                        </h1>
+                        <div class="flex items-center gap-1.5 mt-1">
+                            <span class="inline-flex items-center gap-1.5 h-5 px-2 rounded-pill bg-white border border-slate-200 text-[9px] font-black uppercase tracking-widest text-slate-500">
+                                Widgets <span class="font-mono text-slate-900 ml-0.5">0</span>
+                            </span>
+                            <span class="inline-flex items-center gap-1.5 h-5 px-2 rounded-pill bg-primary-soft border border-primary/20 text-[9px] font-black uppercase tracking-widest text-primary-dark">
+                                Layout <span class="font-mono ml-0.5">12 col</span>
+                            </span>
                         </div>
                     </div>
-                </div>
-                <div class="flex gap-2">
-                    <button
-                        class="flex items-center gap-1.5 px-5 py-1.5 bg-primary text-white rounded-lg text-[10px] font-black shadow-tactile hover:translate-y-[-1px] transition-all">
-                        <span class="material-symbols-outlined text-sm"
-                            style="font-variation-settings: 'FILL' 1;">play_arrow</span> RUN ALL
-                    </button>
-                </div>
-            </header>
-            <div class="flex-1 overflow-y-auto px-6 pb-6 space-y-3 scrollbar-thin">
-
-                <div id="notebook-cells" class="flex-1 overflow-y-auto px-6 pb-6 space-y-3 scrollbar-thin">
-                    <!-- Cells injected here dynamically -->
-                </div>
-
-                <!-- Add Cell Buttons -->
-                <div class="px-6 py-2 shrink-0 flex gap-2">
-                    <button onclick="addCell('sql')"
-                        class="flex-1 border-2 border-dashed border-primary/30 hover:border-primary text-primary text-[10px] font-black uppercase tracking-widest py-2 rounded-xl transition-all">
-                        + SQL CELL
-                    </button>
-                    <button onclick="addCell('python')"
-                        class="flex-1 border-2 border-dashed border-slate-200 hover:border-primary/40 text-slate-400 hover:text-primary text-[10px] font-black uppercase tracking-widest py-2 rounded-xl transition-all">
-                        + PYTHON CELL
-                    </button>
-                </div>
-
-                <div class="heavy-card p-3 bg-white border-slate-100">
-                    <div class="flex justify-between mb-2">
-                        <span
-                            class="text-[9px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-2 py-0.5 rounded-pill border border-slate-100">In
-                            [1] — Execution Block: Python</span>
-                        <span class="text-[9px] text-primary font-black uppercase tracking-wider">Completed in
-                            0.8s</span>
-                    </div>
-
-                    <div class="bg-slate-50 border border-slate-100 p-2.5 rounded-lg">
-                        <code class="block font-mono text-[11px] text-slate-700 leading-relaxed">
-                            <span class="text-primary font-bold">def</span> <span class="text-slate-900 font-bold">calculate_cohort_analysis</span>(df, segment=<span class="text-primary-dark font-black">'Tech'</span>):<br/>
-                            <span class="text-slate-500 italic"># Reusable cohort grouping logic</span><br/>
-                            cohorts = df[df[<span class="text-primary-dark font-black">'dept'</span>] == segment].groupby([<span class="text-primary-dark font-black">'cohort_month'</span>, <span class="text-primary-dark font-black">'tenure'</span>])<br/>
-                            retention = cohorts[<span class="text-primary-dark font-black">'user_id'</span>].nunique().unstack(0).divide(cohort_sizes, axis=1)<br/>
-                            <span class="text-primary font-bold">return</span> retention.fillna(0)<br/>
-                    <br/>
-                        matrix = calculate_cohort_analysis(employee_data, segment=<span class="text-primary-dark font-black">'Engineering'</span>)
-                    </code>
-
-                    </div>
-                    <div class="mt-2 p-2 bg-emerald-50/50 border border-primary/10 rounded-lg">
-                        <div class="flex items-center gap-2 mb-1">
-                            <span class="material-symbols-outlined text-primary text-sm">terminal</span>
-                            <p class="text-[9px] font-black text-primary uppercase tracking-widest">Analysis Output</p>
+                    <div class="flex items-center gap-2">
+                        <div class="inline-flex items-center h-8 rounded-pill bg-slate-50 border border-slate-200 p-0.5 gap-0.5 shadow-inner">
+                            <button type="button"
+                                class="inline-flex items-center h-full px-3 rounded-pill bg-primary text-white text-[10px] font-black uppercase tracking-widest shadow-tactile">
+                                Edit
+                            </button>
+                            <button type="button"
+                                class="inline-flex items-center h-full px-3 rounded-pill text-slate-500 hover:text-slate-900 hover:bg-white transition-colors text-[10px] font-black uppercase tracking-widest">
+                                View
+                            </button>
                         </div>
-                        <p class="text-[10px] text-slate-600 font-medium leading-tight">
-                            Successfully computed retention rates for <span
-                                class="font-bold text-slate-900">4,281</span> unique records. Detected a churn spike
-                            (-32%) in the <span class="font-bold text-slate-900">12-18 month</span> bracket.
+                        <button type="button"
+                            class="inline-flex items-center gap-1.5 h-8 px-4 rounded-pill bg-primary text-white text-[10px] font-black uppercase tracking-widest shadow-tactile hover:translate-y-[-1px] transition-all">
+                            <span class="material-symbols-outlined text-[14px]">add</span>
+                            Widget
+                        </button>
+                    </div>
+                </header>
+
+                <div class="flex flex-1 min-h-0 overflow-hidden">
+                    <div class="flex-1 overflow-y-auto p-6 scrollbar-thin
+                        bg-[radial-gradient(circle_at_1px_1px,_rgba(0,163,108,0.06)_1px,_transparent_0)]
+                        [background-size:14px_14px]">
+                        <div class="grid grid-cols-12 gap-4 min-h-[320px]">
+                            <div class="col-span-4 border-2 border-dashed border-primary/20 rounded-xl h-32 flex items-center justify-center">
+                                <span class="text-[9px] font-black uppercase tracking-widest text-slate-300">Drop widget</span>
+                            </div>
+                            <div class="col-span-8 border-2 border-dashed border-primary/20 rounded-xl h-32 flex items-center justify-center">
+                                <span class="text-[9px] font-black uppercase tracking-widest text-slate-300">Drop widget</span>
+                            </div>
+                            <div class="col-span-12 flex items-center justify-center py-8">
+                                <div class="rounded-organic border-2 border-dashed border-slate-200 bg-white/90 p-8 max-w-md text-center shadow-data-card">
+                                    <span class="material-symbols-outlined text-4xl text-slate-300 mb-3">dashboard_customize</span>
+                                    <h2 class="text-sm font-black text-slate-900 uppercase tracking-tight mb-2">No widgets yet</h2>
+                                    <p class="text-[11px] text-slate-500 font-medium mb-4">
+                                        Materialize a relation in the Data panel, then drop a widget here.
+                                    </p>
+                                    <button type="button" onclick="openDataPanel()"
+                                        class="inline-flex items-center gap-1.5 h-8 px-4 rounded-pill bg-primary text-white text-[10px] font-black uppercase tracking-widest shadow-tactile hover:translate-y-[-1px] transition-all">
+                                        Go to Data
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-span-6 border-2 border-dashed border-primary/20 rounded-xl h-32 flex items-center justify-center">
+                                <span class="text-[9px] font-black uppercase tracking-widest text-slate-300">Drop widget</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <aside class="w-56 border-l border-slate-200 bg-white p-3 space-y-2 shrink-0 overflow-y-auto scrollbar-thin">
+                        <p class="text-[9px] font-black uppercase tracking-widest text-slate-400 px-1">Widgets</p>
+                        <div class="rounded-xl border border-slate-200 p-3 hover:border-primary/40 cursor-grab transition-colors flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary text-[18px]">bar_chart</span>
+                            <span class="text-[10px] font-black uppercase tracking-widest text-slate-700">Bar</span>
+                        </div>
+                        <div class="rounded-xl border border-slate-200 p-3 hover:border-primary/40 cursor-grab transition-colors flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary text-[18px]">show_chart</span>
+                            <span class="text-[10px] font-black uppercase tracking-widest text-slate-700">Line</span>
+                        </div>
+                        <div class="rounded-xl border border-slate-200 p-3 hover:border-primary/40 cursor-grab transition-colors flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary text-[18px]">pin</span>
+                            <span class="text-[10px] font-black uppercase tracking-widest text-slate-700">KPI</span>
+                        </div>
+                        <div class="rounded-xl border border-slate-200 p-3 hover:border-primary/40 cursor-grab transition-colors flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary text-[18px]">table</span>
+                            <span class="text-[10px] font-black uppercase tracking-widest text-slate-700">Table</span>
+                        </div>
+                        <div class="rounded-xl border border-slate-200 p-3 hover:border-primary/40 cursor-grab transition-colors flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary text-[18px]">map</span>
+                            <span class="text-[10px] font-black uppercase tracking-widest text-slate-700">Map</span>
+                        </div>
+                        <div class="rounded-xl border border-slate-200 p-3 hover:border-primary/40 cursor-grab transition-colors flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary text-[18px]">pie_chart</span>
+                            <span class="text-[10px] font-black uppercase tracking-widest text-slate-700">Pie</span>
+                        </div>
+                    </aside>
+                </div>
+            </div>
+
+            <div id="exportPanel" class="hidden flex flex-col flex-1 min-h-0 overflow-hidden">
+                <header class="px-6 py-3 flex items-center justify-between shrink-0 border-b border-slate-200/70
+               bg-[radial-gradient(circle_at_1px_1px,_rgba(0,163,108,0.06)_1px,_transparent_0)]
+               [background-size:14px_14px]">
+                    <div>
+                        <h1 class="text-base font-black text-slate-900 tracking-tight leading-tight">
+                            Export_Job_Untitled<span class="font-mono font-medium text-slate-400">.exp</span>
+                        </h1>
+                        <div class="flex items-center gap-1.5 mt-1 flex-wrap">
+                            <span class="inline-flex items-center gap-1.5 h-5 px-2 rounded-pill bg-white border border-slate-200 text-[9px] font-black uppercase tracking-widest text-slate-500">
+                                Relations <span class="font-mono text-slate-900 ml-0.5">0 selected</span>
+                            </span>
+                            <span class="inline-flex items-center gap-1.5 h-5 px-2 rounded-pill bg-primary-soft border border-primary/20 text-[9px] font-black uppercase tracking-widest text-primary-dark">
+                                Format <span class="font-mono ml-0.5">Parquet</span>
+                            </span>
+                            <span class="inline-flex items-center gap-1.5 h-5 px-2 rounded-pill bg-white border border-slate-200 text-[9px] font-black uppercase tracking-widest text-slate-500">
+                                Size <span class="font-mono text-slate-900 ml-0.5">0 B</span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="inline-flex items-center h-8 rounded-pill bg-slate-50 border border-slate-200 p-0.5 gap-0.5 shadow-inner">
+                            <button type="button" class="inline-flex items-center h-full px-2.5 rounded-pill text-slate-500 hover:bg-white text-[10px] font-black uppercase tracking-widest">CSV</button>
+                            <button type="button" class="inline-flex items-center h-full px-2.5 rounded-pill bg-primary text-white shadow-tactile text-[10px] font-black uppercase tracking-widest">Parquet</button>
+                            <button type="button" class="inline-flex items-center h-full px-2.5 rounded-pill text-slate-500 hover:bg-white text-[10px] font-black uppercase tracking-widest">Excel</button>
+                            <button type="button" class="inline-flex items-center h-full px-2.5 rounded-pill text-slate-500 hover:bg-white text-[10px] font-black uppercase tracking-widest">JSON</button>
+                        </div>
+                        <button type="button"
+                            class="inline-flex items-center gap-1.5 h-8 px-4 rounded-pill bg-primary text-white text-[10px] font-black uppercase tracking-widest shadow-tactile hover:translate-y-[-1px] transition-all">
+                            <span class="material-symbols-outlined text-[14px]">file_export</span>
+                            Run Export
+                        </button>
+                    </div>
+                </header>
+
+                <div class="flex flex-1 min-h-0 overflow-hidden">
+                    <div class="w-[60%] border-r border-slate-200 flex flex-col bg-white min-w-0">
+                        <div class="p-4 border-b border-slate-100">
+                            <label class="inline-flex items-center w-full max-w-md h-8 rounded-pill border border-slate-200 bg-slate-50 px-2.5 gap-1.5">
+                                <span class="material-symbols-outlined text-[14px] text-slate-400">search</span>
+                                <input type="text" placeholder="Search relations…"
+                                    class="flex-1 bg-transparent border-0 text-[11px] font-mono text-slate-700 placeholder:text-slate-400 focus:ring-0 focus:outline-none p-0" />
+                            </label>
+                        </div>
+                        <div class="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin">
+                            <label class="flex items-center gap-3 rounded-xl border border-slate-200 p-3 hover:border-primary/30 cursor-pointer transition-colors">
+                                <input type="checkbox" class="rounded border-slate-300 text-primary focus:ring-primary" checked />
+                                <div class="w-9 h-9 rounded-pill bg-primary-soft border border-primary/20 flex items-center justify-center shrink-0">
+                                    <span class="material-symbols-outlined text-primary text-[18px]">database</span>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-[11px] font-black text-slate-900 font-mono truncate">events_30d</p>
+                                    <p class="text-[9px] font-mono text-slate-400 mt-0.5">12,432 rows · 4.1 MB · pulled 12m ago</p>
+                                </div>
+                                <select class="text-[10px] font-mono border-slate-200 rounded-pill py-1 px-2 focus:ring-primary focus:border-primary">
+                                    <option>Parquet</option>
+                                    <option>CSV</option>
+                                </select>
+                            </label>
+                            <label class="flex items-center gap-3 rounded-xl border border-slate-200 p-3 hover:border-primary/30 cursor-pointer transition-colors">
+                                <input type="checkbox" class="rounded border-slate-300 text-primary focus:ring-primary" />
+                                <div class="w-9 h-9 rounded-pill bg-primary-soft border border-primary/20 flex items-center justify-center shrink-0">
+                                    <span class="material-symbols-outlined text-primary text-[18px]">database</span>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-[11px] font-black text-slate-900 font-mono truncate">cohorts_q3</p>
+                                    <p class="text-[9px] font-mono text-slate-400 mt-0.5">8,201 rows · 2.2 MB · pulled 1h ago</p>
+                                </div>
+                                <select class="text-[10px] font-mono border-slate-200 rounded-pill py-1 px-2 focus:ring-primary focus:border-primary">
+                                    <option>Parquet</option>
+                                    <option>CSV</option>
+                                </select>
+                            </label>
+                            <label class="flex items-center gap-3 rounded-xl border border-slate-200 p-3 hover:border-primary/30 cursor-pointer transition-colors">
+                                <input type="checkbox" class="rounded border-slate-300 text-primary focus:ring-primary" />
+                                <div class="w-9 h-9 rounded-pill bg-primary-soft border border-primary/20 flex items-center justify-center shrink-0">
+                                    <span class="material-symbols-outlined text-primary text-[18px]">database</span>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-[11px] font-black text-slate-900 font-mono truncate">dau_breakdown</p>
+                                    <p class="text-[9px] font-mono text-slate-400 mt-0.5">3,890 rows · 890 KB · pulled 3h ago</p>
+                                </div>
+                                <select class="text-[10px] font-mono border-slate-200 rounded-pill py-1 px-2 focus:ring-primary focus:border-primary">
+                                    <option>Parquet</option>
+                                    <option>CSV</option>
+                                </select>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto p-6 bg-slate-50/50 scrollbar-thin min-w-0">
+                        <h2 class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Destination</h2>
+                        <div class="inline-flex items-center h-8 rounded-pill bg-slate-50 border border-slate-200 p-0.5 gap-0.5 shadow-inner mb-6">
+                            <button type="button" class="inline-flex items-center h-full px-3 rounded-pill bg-primary text-white text-[10px] font-black uppercase tracking-widest shadow-tactile">Download</button>
+                            <button type="button" class="inline-flex items-center h-full px-3 rounded-pill text-slate-500 hover:bg-white text-[10px] font-black uppercase tracking-widest">Cloud</button>
+                            <button type="button" class="inline-flex items-center h-full px-3 rounded-pill text-slate-500 hover:bg-white text-[10px] font-black uppercase tracking-widest">Share Link</button>
+                        </div>
+
+                        <div class="rounded-xl border border-slate-200 bg-white p-4 space-y-4 shadow-data-card max-w-md">
+                            <label class="block">
+                                <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">Filename</span>
+                                <input type="text" value="export_events_30d.parquet"
+                                    class="mt-1 w-full rounded-pill border-slate-200 font-mono text-[11px] focus:border-primary focus:ring-primary" />
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" class="rounded border-slate-300 text-primary focus:ring-primary" checked />
+                                <span class="text-[10px] font-black uppercase tracking-widest text-slate-600">Open after export</span>
+                            </label>
+                        </div>
+
+                        <div class="hidden rounded-xl border border-slate-200 bg-white p-4 space-y-3 max-w-md mt-4">
+                            <div class="inline-flex gap-1">
+                                <button type="button" class="h-7 px-2.5 rounded-pill bg-primary text-white text-[9px] font-black uppercase">S3</button>
+                                <button type="button" class="h-7 px-2.5 rounded-pill border border-slate-200 text-[9px] font-black uppercase text-slate-500">GCS</button>
+                            </div>
+                            <input type="text" placeholder="bucket-name" class="w-full rounded-pill border-slate-200 font-mono text-[11px]" />
+                            <input type="text" placeholder="path/to/export/" class="w-full rounded-pill border-slate-200 font-mono text-[11px]" />
+                        </div>
+
+                        <p class="mt-6 text-[9px] font-mono text-slate-400 max-w-md">
+                            Generated link is valid until manually revoked.
                         </p>
                     </div>
                 </div>
-
             </div>
         </section>
 
@@ -596,7 +1103,7 @@
         </div>
 
         <section id="chat-panel"
-            class="w-[340px] xl:w-[400px] flex-shrink-0 flex flex-col bg-white/40 border-r border-slate-200/60 p-3">
+            class="ease-in-out overflow-hidden w-[400px] xl:w-[400px] flex-shrink-0 flex flex-col bg-white/40 border-r border-slate-200/60 p-3">
             <div class="flex items-center justify-between mb-3">
                 <div>
                     <h2 class="text-lg font-black tracking-tight text-slate-900">{{ model }}</h2>
@@ -687,6 +1194,16 @@
                 </div>
             </div>
         </section>
+
+        <section id="right-sidebar"
+            class="h-screen w-14 flex-shrink-0 flex flex-col items-center py-3 gap-1 border-l border-slate-100 bg-white ">
+            <button onclick="toggleChatPanel()"
+                class="sidebar-tab w-9 h-9 flex items-center justify-center rounded-lg text-slate-400 hover:text-primary hover:bg-primary-soft transition-all relative group/tip">
+                <span class="material-symbols-outlined text-[19px]">auto_awesome</span>
+                <span class="sidebar-tip">AI</span>
+            </button>
+        </section>
+
     </main>
 
     <script>
@@ -696,6 +1213,8 @@
     <script src="{{ url_for('static', filename='js/sidepanel.js') }}"></script>
     <script src="{{ url_for('static', filename='js/MIME.js') }}"></script>
     <script src="{{ url_for('static', filename='js/notebook.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/workspace.js') }}"></script>
     <script>
         window.MathJax = {
             tex: {

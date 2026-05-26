@@ -19,7 +19,6 @@ messageInput.addEventListener('keydown', function (e) {
     }
 });
 
-// 3. The Send Handler
 sendMessageBtn.addEventListener('click', async () => {
     const dbId = document.getElementById('selected_db_id').value;
     if (!dbId) return;
