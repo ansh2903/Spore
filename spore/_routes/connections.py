@@ -104,6 +104,14 @@ def test_connection():
         return {"status": ok, "msg": msg}
     except Exception as e:
         return {"status": False, "msg": str(e)}
+    
+    finally:
+        for path in temp_paths:
+            try:
+                if os.path.exists(path):
+                    os.remove(path)
+            except Exception as cleanup_err:
+                print(f"Failed to cleanup {path}: {cleanup_err}")
 
 # Delete database
 @connections_blueprint.route('/delete-connector/<conn_id>', methods=['GET'])

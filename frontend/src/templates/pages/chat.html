@@ -285,197 +285,200 @@
         </div>
     </header>
 
-    <aside id="sidebar" class="fixed left-0 top-0 h-screen z-40">
-        <!-- Icon Rail -->
-        <div
-            class="w-14 h-full flex flex-col items-center py-3 gap-1 border-r border-slate-100 bg-white pt-20 relative z-10">
-            <button onclick="openSidePanel('database')" id="tab-files"
-                class="sidebar-tab w-9 h-9 flex items-center justify-center rounded-lg text-slate-400 hover:text-primary hover:bg-primary-soft transition-all relative group/tip">
-                <span class="material-symbols-outlined text-[19px]">Database</span>
-                <span class="sidebar-tip">Database</span>
-            </button>
-            <button onclick="openSidePanel('files')" id="tab-files"
-                class="sidebar-tab w-9 h-9 flex items-center justify-center rounded-lg text-slate-400 hover:text-primary hover:bg-primary-soft transition-all relative group/tip">
-                <span class="material-symbols-outlined text-[19px]">folder_open</span>
-                <span class="sidebar-tip">Files</span>
-            </button>
-            <button onclick="openSidePanel('notebook')" id="tab-notebook"
-                class="sidebar-tab w-9 h-9 flex items-center justify-center rounded-lg text-slate-400 hover:text-primary hover:bg-primary-soft transition-all relative group/tip">
-                <span class="material-symbols-outlined text-[19px]">auto_awesome_motion</span>
-                <span class="sidebar-tip">Notebook</span>
-            </button>
-            <button onclick="openSidePanel('history')" id="tab-history"
-                class="sidebar-tab w-9 h-9 flex items-center justify-center rounded-lg text-slate-400 hover:text-primary hover:bg-primary-soft transition-all relative group/tip">
-                <span class="material-symbols-outlined text-[19px]">history</span>
-                <span class="sidebar-tip">History</span>
-            </button>
+    <main id="app-viewport" class="pt-16 h-screen flex overflow-hidden">
+        <aside id="sidebar-rail"
+        class="w-14 h-full shrink-0 flex flex-col items-center gap-1 -mt-16
+               border-r border-slate-100 bg-white">
 
-            <div class="mt-auto flex flex-col items-center gap-1 w-full border-t border-slate-100 pt-2">
-                <a href="/settings">
+            <!-- Icon Rail -->
+            <div
+                class="w-14 h-full flex flex-col items-center py-3 gap-1 border-r border-slate-100 bg-white pt-20 relative z-10">
+                <button onclick="openSidePanel('database')" id="tab-files"
+                    class="sidebar-tab w-9 h-9 flex items-center justify-center rounded-lg text-slate-400 hover:text-primary hover:bg-primary-soft transition-all relative group/tip">
+                    <span class="material-symbols-outlined text-[19px]">Database</span>
+                    <span class="sidebar-tip">Database</span>
+                </button>
+                <button onclick="openSidePanel('files')" id="tab-files"
+                    class="sidebar-tab w-9 h-9 flex items-center justify-center rounded-lg text-slate-400 hover:text-primary hover:bg-primary-soft transition-all relative group/tip">
+                    <span class="material-symbols-outlined text-[19px]">folder_open</span>
+                    <span class="sidebar-tip">Files</span>
+                </button>
+                <button onclick="openSidePanel('notebook')" id="tab-notebook"
+                    class="sidebar-tab w-9 h-9 flex items-center justify-center rounded-lg text-slate-400 hover:text-primary hover:bg-primary-soft transition-all relative group/tip">
+                    <span class="material-symbols-outlined text-[19px]">auto_awesome_motion</span>
+                    <span class="sidebar-tip">Notebook</span>
+                </button>
+                <button onclick="openSidePanel('history')" id="tab-history"
+                    class="sidebar-tab w-9 h-9 flex items-center justify-center rounded-lg text-slate-400 hover:text-primary hover:bg-primary-soft transition-all relative group/tip">
+                    <span class="material-symbols-outlined text-[19px]">history</span>
+                    <span class="sidebar-tip">History</span>
+                </button>
+
+                <div class="mt-auto flex flex-col items-center gap-1 w-full border-t border-slate-100 pt-2">
+                    <a href="/settings">
+                        <button
+                            class="w-9 h-9 flex items-center justify-center rounded-lg text-slate-300 hover:text-slate-500 transition-all relative group/tip">
+                            <span class="material-symbols-outlined text-[19px]">settings</span>
+                            <span class="sidebar-tip">Settings</span>
+                        </button>
+                    </a>
                     <button
                         class="w-9 h-9 flex items-center justify-center rounded-lg text-slate-300 hover:text-slate-500 transition-all relative group/tip">
-                        <span class="material-symbols-outlined text-[19px]">settings</span>
-                        <span class="sidebar-tip">Settings</span>
-                    </button>
-                </a>
-                <button
-                    class="w-9 h-9 flex items-center justify-center rounded-lg text-slate-300 hover:text-slate-500 transition-all relative group/tip">
-                    <span class="material-symbols-outlined text-[19px]">help_outline</span>
-                    <span class="sidebar-tip">Help</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- Overlay Panel — absolutely positioned to the right of the rail -->
-        <div id="side-panel"
-            class="absolute top-0 left-14 h-full bg-white border-r border-slate-200 flex flex-col overflow-hidden"
-            style="width:220px; transform:translateX(-220px); transition:transform 0.2s cubic-bezier(0.4,0,0.2,1); box-shadow:4px 0 24px -4px rgba(0,0,0,0.04);">
-
-            <div id="panel-database" class="side-panel-content hidden flex-col h-full">
-                <div class="px-3 py-3 border-b border-slate-100 flex items-center justify-between shrink-0">
-                    <div class="flex items-center gap-2">
-                        <span class="material-symbols-outlined text-[14px] text-primary">database</span>
-                        <span class="text-[9px] font-black uppercase tracking-widest text-slate-600">Schema
-                            Browser</span>
-                    </div>
-                    <button onclick="closeSidePanel()"
-                        class="w-6 h-6 flex items-center justify-center rounded-md text-slate-300 hover:text-slate-600 hover:bg-slate-100 transition-all">
-                        <span class="material-symbols-outlined text-[15px]">close</span>
-                    </button>
-                </div>
-
-                <div id="db-summary" class="px-4 py-4 border-b border-slate-100 bg-slate-50/30">
-                    <div class="flex flex-col gap-0.5">
-                        <span id="db-name-label" class="text-[9px] font-black text-primary uppercase tracking-widest">No
-                            Database Selected</span>
-                        <div class="flex items-center gap-3 mt-1">
-                            <div class="flex flex-col">
-                                <span id="table-count" class="text-xs font-black text-slate-700">0</span>
-                                <span class="text-[8px] text-slate-400 uppercase font-bold">Tables</span>
-                            </div>
-                            <div class="w-px h-6 bg-slate-200"></div>
-                            <div class="flex flex-col">
-                                <span id="schema-name" class="text-xs font-black text-slate-700">-</span>
-                                <span class="text-[8px] text-slate-400 uppercase font-bold">Schema</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="px-2 py-2">
-                    <div class="relative">
-                        <span
-                            class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-[14px] text-slate-400">search</span>
-                        <input type="text" placeholder="Filter tables..."
-                            class="w-full pl-7 pr-2 py-1.5 bg-slate-100 border-none rounded-md text-[10px] font-bold focus:ring-1 focus:ring-primary/30">
-                    </div>
-                </div>
-
-                <div id="schema-tree" class="flex-1 overflow-y-auto px-2 pb-3 space-y-1 scrollbar-thin">
-                    <div class="text-[9px] text-slate-400 text-center py-20 font-bold italic">
-                        Select a connection to view schema
-                    </div>
-                </div>
-
-                <div class="shrink-0 p-2 border-t border-slate-100">
-                    <button onclick="refreshSchema()"
-                        class="w-full flex items-center justify-center gap-1.5 py-1.5 text-[9px] font-black uppercase tracking-wider text-slate-400 hover:text-primary hover:bg-primary-soft rounded-lg transition-all">
-                        <span class="material-symbols-outlined text-[13px]">refresh</span> Sync Metadata
+                        <span class="material-symbols-outlined text-[19px]">help_outline</span>
+                        <span class="sidebar-tip">Help</span>
                     </button>
                 </div>
             </div>
-            <!-- Files Panel -->
-            <div id="panel-files" class="side-panel-content hidden flex-col h-full">
-                <div class="px-3 py-3 border-b border-slate-100 flex items-center justify-between shrink-0">
-                    <div class="flex items-center gap-2">
-                        <span class="material-symbols-outlined text-[14px] text-primary">folder_open</span>
-                        <span class="text-[9px] font-black uppercase tracking-widest text-slate-600">File Manager</span>
-                    </div>
-                    <button onclick="closeSidePanel()"
-                        class="w-6 h-6 flex items-center justify-center rounded-md text-slate-300 hover:text-slate-600 hover:bg-slate-100 transition-all">
-                        <span class="material-symbols-outlined text-[15px]">close</span>
-                    </button>
-                </div>
+        </aside>
 
-                <div class="px-4 py-5 border-b border-slate-100 bg-slate-50/30">
-                    <div class="flex flex-col gap-0.5">
-                        <span class="text-[9px] font-medium text-slate-400 uppercase tracking-widest">Workspace
-                            Volume</span>
+        <aside id="side-panel"
+            class="h-full shrink-0 bg-white border-r border-slate-200 overflow-hidden"
+            style="width:0; transition: width 0.2s cubic-bezier(0.4,0,0.2,1);
+                   box-shadow: 4px 0 24px -4px rgba(0,0,0,0.04);">
+    
+                <div id="panel-database" class="side-panel-content hidden flex-col h-full">
+                    <div class="px-3 py-3 border-b border-slate-100 flex items-center justify-between shrink-0">
                         <div class="flex items-center gap-2">
-                            <span id="storage-used"
-                                class="text-lg font-mono font-medium text-slate-600 tracking-tighter">0.00 MB</span>
+                            <span class="material-symbols-outlined text-[14px] text-primary">database</span>
+                            <span class="text-[9px] font-black uppercase tracking-widest text-slate-600">Schema
+                                Browser</span>
+                        </div>
+                        <button onclick="closeSidePanel()"
+                            class="w-6 h-6 flex items-center justify-center rounded-md text-slate-300 hover:text-slate-600 hover:bg-slate-100 transition-all">
+                            <span class="material-symbols-outlined text-[15px]">close</span>
+                        </button>
+                    </div>
+
+                    <div id="db-summary" class="px-4 py-4 border-b border-slate-100 bg-slate-50/30">
+                        <div class="flex flex-col gap-0.5">
+                            <span id="db-name-label" class="text-[9px] font-black text-primary uppercase tracking-widest">No
+                                Database Selected</span>
+                            <div class="flex items-center gap-3 mt-1">
+                                <div class="flex flex-col">
+                                    <span id="table-count" class="text-xs font-black text-slate-700">0</span>
+                                    <span class="text-[8px] text-slate-400 uppercase font-bold">Tables</span>
+                                </div>
+                                <div class="w-px h-6 bg-slate-200"></div>
+                                <div class="flex flex-col">
+                                    <span id="schema-name" class="text-xs font-black text-slate-700">-</span>
+                                    <span class="text-[8px] text-slate-400 uppercase font-bold">Schema</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="px-2 pt-3">
-                    <button onclick="document.getElementById('fi').click()"
-                        class="w-full py-2 border border-dashed border-slate-200 rounded-md flex items-center justify-center gap-2 hover:border-primary/30 hover:bg-primary-soft/30 transition-all group">
-                        <span
-                            class="material-symbols-outlined text-[16px] text-slate-400 group-hover:text-primary">upload_file</span>
-                        <span class="text-[10px] font-bold text-slate-400 group-hover:text-primary">Drop or
-                            Import</span>
-                    </button>
-                </div>
-
-                <div id="stream-list" class="flex-1 overflow-y-auto px-2 pb-3 mt-2 space-y-1.5 scrollbar-thin">
-                    <div class="text-[9px] text-slate-400 text-center py-8 font-bold">No streams yet</div>
-                </div>
-
-                <div class="shrink-0 p-2 border-t border-slate-100">
-                    <button onclick="loadStreams()"
-                        class="w-full flex items-center justify-center gap-1.5 py-1.5 text-[9px] font-black uppercase tracking-wider text-slate-400 hover:text-primary hover:bg-primary-soft rounded-lg transition-all">
-                        <span class="material-symbols-outlined text-[13px]">refresh</span> Refresh
-                    </button>
-                </div>
-            </div>
-
-            <!-- Notebook Panel -->
-            <div id="panel-notebook" class="side-panel-content hidden flex-col h-full">
-                <div class="px-3 py-3 border-b border-slate-100 flex items-center justify-between shrink-0">
-                    <div class="flex items-center gap-2">
-                        <span class="material-symbols-outlined text-[14px] text-primary">auto_awesome_motion</span>
-                        <span class="text-[9px] font-black uppercase tracking-widest text-slate-600">Notebook</span>
+                    <div class="px-2 py-2">
+                        <div class="relative">
+                            <span
+                                class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-[14px] text-slate-400">search</span>
+                            <input type="text" placeholder="Filter tables..."
+                                class="w-full pl-7 pr-2 py-1.5 bg-slate-100 border-none rounded-md text-[10px] font-bold focus:ring-1 focus:ring-primary/30">
+                        </div>
                     </div>
-                    <button onclick="closeSidePanel()"
-                        class="w-6 h-6 flex items-center justify-center rounded-md text-slate-300 hover:text-slate-600 hover:bg-slate-100 transition-all">
-                        <span class="material-symbols-outlined text-[15px]">close</span>
-                    </button>
-                </div>
-                <div class="flex-1 flex items-center justify-center">
-                    <span class="text-[9px] text-slate-400 font-bold">Coming soon</span>
-                </div>
-            </div>
 
-            <!-- History Panel -->
-            <div id="panel-history" class="side-panel-content hidden flex-col h-full">
-                <div class="px-3 py-3 border-b border-slate-100 flex items-center justify-between shrink-0">
-                    <div class="flex items-center gap-2">
-                        <span class="material-symbols-outlined text-[14px] text-primary">history</span>
-                        <span class="text-[9px] font-black uppercase tracking-widest text-slate-600">History</span>
+                    <div id="schema-tree" class="flex-1 overflow-y-auto px-2 pb-3 space-y-1 scrollbar-thin">
+                        <div class="text-[9px] text-slate-400 text-center py-20 font-bold italic">
+                            Select a connection to view schema
+                        </div>
                     </div>
-                    <button onclick="closeSidePanel()"
-                        class="w-6 h-6 flex items-center justify-center rounded-md text-slate-300 hover:text-slate-600 hover:bg-slate-100 transition-all">
-                        <span class="material-symbols-outlined text-[15px]">close</span>
-                    </button>
+
+                    <div class="shrink-0 p-2 border-t border-slate-100">
+                        <button onclick="refreshSchema()"
+                            class="w-full flex items-center justify-center gap-1.5 py-1.5 text-[9px] font-black uppercase tracking-wider text-slate-400 hover:text-primary hover:bg-primary-soft rounded-lg transition-all">
+                            <span class="material-symbols-outlined text-[13px]">refresh</span> Sync Metadata
+                        </button>
+                    </div>
                 </div>
-                <div class="flex-1 flex items-center justify-center">
-                    <span class="text-[9px] text-slate-400 font-bold">No history yet</span>
+                <!-- Files Panel -->
+                <div id="panel-files" class="side-panel-content hidden flex-col h-full">
+                    <div class="px-3 py-3 border-b border-slate-100 flex items-center justify-between shrink-0">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[14px] text-primary">folder_open</span>
+                            <span class="text-[9px] font-black uppercase tracking-widest text-slate-600">File Manager</span>
+                        </div>
+                        <button onclick="closeSidePanel()"
+                            class="w-6 h-6 flex items-center justify-center rounded-md text-slate-300 hover:text-slate-600 hover:bg-slate-100 transition-all">
+                            <span class="material-symbols-outlined text-[15px]">close</span>
+                        </button>
+                    </div>
+
+                    <div class="px-4 py-5 border-b border-slate-100 bg-slate-50/30">
+                        <div class="flex flex-col gap-0.5">
+                            <span class="text-[9px] font-medium text-slate-400 uppercase tracking-widest">Workspace
+                                Volume</span>
+                            <div class="flex items-center gap-2">
+                                <span id="storage-used"
+                                    class="text-lg font-mono font-medium text-slate-600 tracking-tighter">0.00 MB</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="px-2 pt-3">
+                        <button onclick="document.getElementById('fi').click()"
+                            class="w-full py-2 border border-dashed border-slate-200 rounded-md flex items-center justify-center gap-2 hover:border-primary/30 hover:bg-primary-soft/30 transition-all group">
+                            <span
+                                class="material-symbols-outlined text-[16px] text-slate-400 group-hover:text-primary">upload_file</span>
+                            <span class="text-[10px] font-bold text-slate-400 group-hover:text-primary">Drop or
+                                Import</span>
+                        </button>
+                    </div>
+
+                    <div id="stream-list" class="flex-1 overflow-y-auto px-2 pb-3 mt-2 space-y-1.5 scrollbar-thin">
+                        <div class="text-[9px] text-slate-400 text-center py-8 font-bold">No streams yet</div>
+                    </div>
+
+                    <div class="shrink-0 p-2 border-t border-slate-100">
+                        <button onclick="loadStreams()"
+                            class="w-full flex items-center justify-center gap-1.5 py-1.5 text-[9px] font-black uppercase tracking-wider text-slate-400 hover:text-primary hover:bg-primary-soft rounded-lg transition-all">
+                            <span class="material-symbols-outlined text-[13px]">refresh</span> Refresh
+                        </button>
+                    </div>
                 </div>
+
+                <!-- Notebook Panel -->
+                <div id="panel-notebook" class="side-panel-content hidden flex-col h-full">
+                    <div class="px-3 py-3 border-b border-slate-100 flex items-center justify-between shrink-0">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[14px] text-primary">auto_awesome_motion</span>
+                            <span class="text-[9px] font-black uppercase tracking-widest text-slate-600">Notebook</span>
+                        </div>
+                        <button onclick="closeSidePanel()"
+                            class="w-6 h-6 flex items-center justify-center rounded-md text-slate-300 hover:text-slate-600 hover:bg-slate-100 transition-all">
+                            <span class="material-symbols-outlined text-[15px]">close</span>
+                        </button>
+                    </div>
+                    <div class="flex-1 flex items-center justify-center">
+                        <span class="text-[9px] text-slate-400 font-bold">Coming soon</span>
+                    </div>
+                </div>
+
+                <!-- History Panel -->
+                <div id="panel-history" class="side-panel-content hidden flex-col h-full">
+                    <div class="px-3 py-3 border-b border-slate-100 flex items-center justify-between shrink-0">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[14px] text-primary">history</span>
+                            <span class="text-[9px] font-black uppercase tracking-widest text-slate-600">History</span>
+                        </div>
+                        <button onclick="closeSidePanel()"
+                            class="w-6 h-6 flex items-center justify-center rounded-md text-slate-300 hover:text-slate-600 hover:bg-slate-100 transition-all">
+                            <span class="material-symbols-outlined text-[15px]">close</span>
+                        </button>
+                    </div>
+                    <div class="flex-1 flex items-center justify-center">
+                        <span class="text-[9px] text-slate-400 font-bold">No history yet</span>
+                    </div>
+                </div>
+
             </div>
+        </aside>
 
-        </div>
-    </aside>
-
-    <main id="app-viewport" class="ml-16 pt-16 h-screen flex overflow-hidden">
-        <!-- Workspace Split -->
         <section id="workspace-panel"
             class="h-full bg-slate-50 flex-1 bg-transparent flex flex-col overflow-hidden relative">
             <div
                 class="w-full px-6 py-2.5 bg-white border-b border-slate-200 flex items-center justify-between shrink-0">
 
                 <!-- Mode dial -->
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-3 min-w-0">
                     <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">View</span>
 
                     <div
@@ -502,16 +505,21 @@
                     </div>
                 </div>
 
-                <!-- Connection chip (mirrors the vital pills below) -->
+                <!-- Global connection picker (single source of truth) -->
                 <div class="flex items-center gap-2">
-                    <select id="selected_db_id" name="selected_db_id"
-                        class="bg-transparent border-none p-0 text-[10px] font-black text-slate-600 focus:ring-0 cursor-pointer uppercase tracking-tight">
-                        <option value="" disabled selected>Select Context</option>
-                        {% for conn in connections %}
-                        <option value="{{ conn.id }}">{{ conn.db_type }} - {{ conn.display_name or conn.name }}
-                        </option>
-                        {% endfor %}
-                    </select>
+                    <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">Connection</span>
+                    <label
+                        class="inline-flex items-center h-8 rounded-pill border border-slate-200 bg-white pl-2.5 pr-2 gap-1.5 shadow-sm">
+                        <span class="material-symbols-outlined text-[14px] text-slate-400">database</span>
+                        <select id="selected_db_id" name="selected_db_id"
+                            class="bg-transparent border-none p-0 text-[10px] font-black text-slate-700 focus:ring-0 cursor-pointer uppercase tracking-tight pr-6">
+                            <option value="" disabled selected>Select Context</option>
+                            {% for conn in connections %}
+                            <option value="{{ conn.id }}">{{ conn.source_type }} - {{ conn.display_name or conn.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </label>
                 </div>
             </div>
 
@@ -520,23 +528,21 @@
                bg-[radial-gradient(circle_at_1px_1px,_rgba(0,163,108,0.06)_1px,_transparent_0)]
                [background-size:14px_14px]">
                     <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-pill bg-primary-soft border border-primary/20 flex items-center justify-center shrink-0">
-                            <span class="material-symbols-outlined text-primary text-[18px]">science</span>
-                        </div>
                         <div>
                             <h1 class="text-base font-black text-slate-900 tracking-tight leading-tight">
-                                Postgres_Prod<span class="font-mono font-medium text-slate-400">.pg</span>
+                                <span id="data-header-name">Workspace</span><span id="data-header-ext"
+                                    class="font-mono font-medium text-slate-400"></span>
                             </h1>
                             <div class="flex items-center gap-1.5 mt-1 flex-wrap">
                                 <span class="inline-flex items-center gap-1.5 h-5 px-2 rounded-pill bg-white border border-slate-200 text-[9px] font-black uppercase tracking-widest text-slate-500">
                                     <span class="w-1.5 h-1.5 rounded-pill bg-primary animate-pulse"></span>
-                                    Source <span class="font-mono text-slate-900 ml-0.5">PG · 5432</span>
+                                    Source <span id="data-header-vendor" class="font-mono text-slate-900 ml-0.5">—</span>
                                 </span>
                                 <span class="inline-flex items-center gap-1.5 h-5 px-2 rounded-pill bg-primary-soft border border-primary/20 text-[9px] font-black uppercase tracking-widest text-primary-dark">
-                                    Schema <span class="font-mono ml-0.5">public</span>
+                                    Context <span id="data-header-context" class="font-mono ml-0.5">—</span>
                                 </span>
                                 <span class="inline-flex items-center gap-1.5 h-5 px-2 rounded-pill bg-primary-soft border border-primary/20 text-[9px] font-black uppercase tracking-widest text-primary-dark">
-                                    Mode <span class="font-mono ml-0.5">Query</span>
+                                    Mode <span id="data-header-mode" class="font-mono ml-0.5">—</span>
                                 </span>
                             </div>
                         </div>
@@ -560,228 +566,363 @@
                     </div>
                 </header>
 
-                <div class="flex flex-1 min-h-0 overflow-hidden">
-                    <aside class="w-[40%] min-w-[220px] border-r border-slate-200 flex flex-col bg-white shrink-0">
-                        <div class="p-3 border-b border-slate-100">
-                            <label class="inline-flex items-center w-full h-8 rounded-pill border border-slate-200 bg-slate-50 px-2.5 gap-1.5">
-                                <span class="material-symbols-outlined text-[14px] text-slate-400">search</span>
-                                <input type="text" placeholder="Search tables…"
-                                    class="flex-1 bg-transparent border-0 text-[11px] font-mono text-slate-700 placeholder:text-slate-400 focus:ring-0 focus:outline-none p-0" />
-                            </label>
-                        </div>
-                        <div class="flex-1 overflow-y-auto p-2 space-y-0.5 scrollbar-thin text-[11px]">
-                            <div class="flex items-center gap-1.5 px-2 py-1.5 font-black text-slate-700 uppercase tracking-widest text-[9px]">
-                                <span class="material-symbols-outlined text-[14px] text-primary">folder_open</span>
-                                public
-                            </div>
-                            <div class="group/schema pl-4">
-                                <div class="flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-50 cursor-pointer">
-                                    <div class="flex items-center gap-1.5 min-w-0">
-                                        <span class="material-symbols-outlined text-[14px] text-slate-400">table</span>
-                                        <span class="font-mono text-slate-800 truncate">events</span>
-                                        <span class="text-[9px] text-slate-400 font-mono shrink-0">1.2M</span>
-                                    </div>
-                                    <button type="button"
-                                        class="opacity-0 group-hover/schema:opacity-100 inline-flex h-5 px-1.5 rounded-pill border border-slate-200 bg-white text-[8px] font-black uppercase text-primary transition-opacity">
-                                        + Use
-                                    </button>
-                                </div>
-                                <div class="pl-6 space-y-0.5 pb-1">
-                                    <div class="flex justify-between px-2 py-0.5 font-mono text-slate-600"><span>id</span><span class="text-slate-400">int4</span></div>
-                                    <div class="flex justify-between px-2 py-0.5 font-mono text-slate-600"><span>user_id</span><span class="text-slate-400">uuid</span></div>
-                                    <div class="flex justify-between px-2 py-0.5 font-mono text-slate-600"><span>country</span><span class="text-slate-400">varchar</span></div>
-                                    <div class="flex justify-between px-2 py-0.5 font-mono text-slate-600"><span>created_at</span><span class="text-slate-400">timestamptz</span></div>
-                                </div>
-                            </div>
-                            <div class="group/schema pl-4">
-                                <div class="flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-50 cursor-pointer">
-                                    <div class="flex items-center gap-1.5 min-w-0">
-                                        <span class="material-symbols-outlined text-[14px] text-slate-400">table</span>
-                                        <span class="font-mono text-slate-800 truncate">users</span>
-                                        <span class="text-[9px] text-slate-400 font-mono shrink-0">84K</span>
-                                    </div>
-                                    <button type="button"
-                                        class="opacity-0 group-hover/schema:opacity-100 inline-flex h-5 px-1.5 rounded-pill border border-slate-200 bg-white text-[8px] font-black uppercase text-primary transition-opacity">
-                                        + Use
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="group/schema pl-4">
-                                <div class="flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-50 cursor-pointer">
-                                    <div class="flex items-center gap-1.5 min-w-0">
-                                        <span class="material-symbols-outlined text-[14px] text-slate-400">table</span>
-                                        <span class="font-mono text-slate-800 truncate">cohorts</span>
-                                        <span class="text-[9px] text-slate-400 font-mono shrink-0">12K</span>
-                                    </div>
-                                    <button type="button"
-                                        class="opacity-0 group-hover/schema:opacity-100 inline-flex h-5 px-1.5 rounded-pill border border-slate-200 bg-white text-[8px] font-black uppercase text-primary transition-opacity">
-                                        + Use
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <p class="px-3 py-2 border-t border-slate-100 text-[9px] font-mono text-slate-400 shrink-0">
-                            metadata refreshed 2m ago
-                        </p>
-                    </aside>
+                <!-- Database/Warehouse -->
+                <div id="sql-data" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                    <div class="flex flex-1 min-h-0 overflow-hidden">
+                        <div class="flex-1 flex flex-col min-w-0 bg-slate-50/50">
 
-                    <div class="flex-1 flex flex-col min-w-0 bg-slate-50/50">
-                        <div class="px-4 py-2 border-b border-slate-200 bg-white flex items-center justify-between shrink-0">
-                            <div class="inline-flex items-center h-8 rounded-pill bg-slate-50 border border-slate-200 p-0.5 gap-0.5 shadow-inner">
-                                <button type="button" onclick="setDataTab('query')" data-tab="query"
-                                    class="data-work-tab inline-flex items-center h-full px-3 rounded-pill bg-primary text-white text-[10px] font-black uppercase tracking-widest shadow-tactile">
-                                    Query
-                                </button>
-                                <button type="button" onclick="setDataTab('preview')" data-tab="preview"
-                                    class="data-work-tab inline-flex items-center h-full px-3 rounded-pill text-slate-500 hover:text-slate-900 hover:bg-white transition-colors text-[10px] font-black uppercase tracking-widest">
-                                    Preview
-                                </button>
-                                <button type="button" onclick="setDataTab('filters')" data-tab="filters"
-                                    class="data-work-tab inline-flex items-center h-full px-3 rounded-pill text-slate-500 hover:text-slate-900 hover:bg-white transition-colors text-[10px] font-black uppercase tracking-widest">
-                                    Filters
-                                </button>
-                            </div>
-                            <div id="data-tab-query-actions" class="flex items-center gap-1.5">
-                                <button type="button"
-                                    class="inline-flex items-center h-7 px-2.5 rounded-pill border border-slate-200 bg-white text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-primary transition-colors">
-                                    Format
-                                </button>
-                                <button type="button"
-                                    class="inline-flex items-center h-7 px-2.5 rounded-pill border border-slate-200 bg-white text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-primary transition-colors">
-                                    Explain
-                                </button>
+                            <div class="flex-1 overflow-hidden p-4 min-h-0 relative">
+
+                                <!-- SQL/NoSQL editor: flexes the full height of the container -->
+                                <div id="data-tab-query" class="h-full flex flex-col">
+                                    <div class="flex items-center justify-between px-3 py-1.5 rounded-t-xl border border-b-0 border-slate-800 bg-slate-950 shrink-0">
+                                        <div class="flex items-center gap-2">
+                                            <span class="inline-flex items-center gap-1.5 h-5 px-2 rounded-pill bg-slate-900 border border-slate-800 text-[9px] font-black uppercase tracking-widest text-slate-300">
+                                                <span class="w-1.5 h-1.5 rounded-pill bg-primary animate-pulse"></span>
+                                                <span id="data-editor-lang">SQL</span>
+                                            </span>
+                                            <span id="data-editor-status"
+                                                class="text-[9px] font-black uppercase tracking-widest text-slate-500 font-mono">Ready</span>
+                                        </div>
+                                        <span class="hidden sm:inline-flex items-center gap-1 text-[9px] font-mono text-slate-500">
+                                            <kbd class="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-[9px] text-slate-400">⇧</kbd>
+                                            +
+                                            <kbd class="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-[9px] text-slate-400">⏎</kbd>
+                                            <span class="ml-1 text-slate-500">to run</span>
+                                        </span>
+                                    </div>
+                                    <div id="data-editor-mount"
+                                        class="flex-1 min-h-0 rounded-b-xl overflow-hidden border border-t-0 border-slate-800 bg-slate-900">
+                                    </div>
+                                </div>
+ 
+                                <!-- Preview table overlay: floats above editor, draggable top edge -->
+                                <div id="data-tab-preview"
+                                    class="absolute left-4 right-4 bottom-4 flex flex-col z-20 bg-white/95 backdrop-blur-sm rounded-xl border border-slate-200 shadow-lg"
+                                    style="top: 55%;">
+
+                                    <!-- Drag handle to adjust the top edge -->
+                                    <div id="preview-resize-handle"
+                                        class="absolute -top-1.5 left-0 right-0 h-3 cursor-row-resize flex items-center justify-center group z-10">
+                                        <div class="w-12 h-1 rounded-full bg-slate-300 group-hover:bg-primary transition-colors"></div>
+                                    </div>
+
+                                    <!-- Action row (moved here from the bottom bar) -->
+                                    <div class="flex items-center justify-between gap-3 px-3 pt-3 pb-2 border-b border-slate-100 shrink-0 flex-wrap">
+                                        <div class="flex items-center gap-2 flex-wrap">
+                                            <span class="inline-flex items-center h-7 px-2.5 rounded-pill bg-slate-900 text-white text-[9px] font-black uppercase tracking-widest">
+                                                Materialize
+                                            </span>
+                                            <label class="inline-flex items-center h-7 rounded-pill border border-slate-200 bg-slate-50 pl-2.5 pr-2 gap-1.5">
+                                                <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">Stream</span>
+                                                <input id="data-stream-name" type="text" value="stream_query_1"
+                                                    class="w-32 bg-transparent border-0 font-mono text-[11px] text-slate-800 focus:ring-0 focus:outline-none p-0" />
+                                            </label>
+                                            <label class="inline-flex items-center h-7 rounded-pill border border-slate-200 bg-slate-50 pl-2.5 pr-2 gap-1.5">
+                                                <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">Limit</span>
+                                                <input id="data-row-limit" type="text" value="1000"
+                                                    class="w-14 bg-transparent border-0 font-mono text-[11px] text-slate-800 focus:ring-0 focus:outline-none p-0" />
+                                            </label>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <button type="button" onclick="runDataPreview()"
+                                                class="inline-flex items-center gap-1.5 h-7 px-3 rounded-pill bg-white border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-primary hover:border-primary/40 transition-all">
+                                                Preview
+                                            </button>
+                                            <button type="button" onclick="materializeDataQuery()"
+                                                class="inline-flex items-center gap-1.5 h-7 px-3 rounded-pill bg-primary text-white text-[10px] font-black uppercase tracking-widest shadow-tactile hover:translate-y-[-1px] transition-all">
+                                                <span class="material-symbols-outlined text-[14px]">download</span>
+                                                Pull
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Result meta strip -->
+                                    <div class="flex items-center justify-between px-3 py-1.5 shrink-0">
+                                        <span id="data-result-meta"
+                                            class="inline-flex items-center h-5 px-2 rounded-pill bg-slate-50 border border-slate-200 text-[9px] font-black uppercase tracking-widest text-slate-500 font-mono">
+                                            — rows · — cols · — ms
+                                        </span>
+                                    </div>
+
+                                    <!-- Result table -->
+                                    <div class="flex-1 min-h-0 overflow-auto border-t border-slate-100 bg-white scrollbar-thin mx-3 mb-3 rounded-b-lg">
+                                        <table class="w-full text-left text-[11px] font-mono">
+                                            <thead class="sticky top-0 bg-slate-50 border-b border-slate-200">
+                                                <tr id="data-result-head-row">
+                                                    <th class="px-3 py-2 font-black text-slate-300 uppercase tracking-widest text-[9px] italic">
+                                                        Run a query to see columns
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="data-result-tbody" class="text-slate-700"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
                             </div>
                         </div>
+                    </div>
 
-                        <div class="flex-1 overflow-hidden p-4 min-h-0">
-                            <div id="data-tab-query" class="h-full flex flex-col">
-                                <div class="flex-1 min-h-[200px] rounded-xl overflow-hidden border border-slate-800 bg-slate-900 flex font-mono text-[12px] text-slate-100">
-                                    <div class="w-10 shrink-0 bg-slate-950 text-slate-500 text-right py-3 pr-2 select-none leading-relaxed border-r border-slate-800">
-                                        <div>1</div><div>2</div><div>3</div>
-                                    </div>
-                                    <pre class="flex-1 p-3 overflow-auto leading-relaxed whitespace-pre-wrap"><code>SELECT *
-FROM events
-WHERE created_at &gt; now() - interval '30 days'
-LIMIT 1000;</code><span class="inline-block w-2 h-4 bg-primary animate-pulse align-middle ml-0.5"></span></pre>
-                                </div>
-                            </div>
+                    <div class="bg-slate-50 border-t border-slate-200 px-6 py-2 flex items-center justify-between gap-4 shrink-0">
+                        <span class="text-[9px] font-black uppercase tracking-widest text-slate-400 font-mono">
+                            Relations · <span class="text-slate-700">3 pulled</span> · 12.4 MB
+                        </span>
+                        <div class="flex items-center gap-2 flex-wrap justify-end">
+                            <span class="inline-flex items-center gap-1 h-7 pl-2 pr-1 rounded-pill bg-white border border-slate-200 text-[10px] font-mono text-slate-700">
+                                <span class="material-symbols-outlined text-[14px] text-primary">database</span>
+                                events_30d
+                                <button type="button" class="w-6 h-6 flex items-center justify-center rounded-pill hover:bg-primary-soft text-slate-400 hover:text-primary" title="Open in notebook">
+                                    <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+                                </button>
+                            </span>
+                            <span class="inline-flex items-center gap-1 h-7 pl-2 pr-1 rounded-pill bg-white border border-slate-200 text-[10px] font-mono text-slate-700">
+                                <span class="material-symbols-outlined text-[14px] text-primary">database</span>
+                                cohorts_q3
+                                <button type="button" class="w-6 h-6 flex items-center justify-center rounded-pill hover:bg-primary-soft text-slate-400 hover:text-primary" title="Open in notebook">
+                                    <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+                                </button>
+                            </span>
+                            <span class="inline-flex items-center gap-1 h-7 pl-2 pr-1 rounded-pill bg-white border border-slate-200 text-[10px] font-mono text-slate-700">
+                                <span class="material-symbols-outlined text-[14px] text-primary">database</span>
+                                dau_breakdown
+                                <button type="button" class="w-6 h-6 flex items-center justify-center rounded-pill hover:bg-primary-soft text-slate-400 hover:text-primary" title="Open in notebook">
+                                    <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+                                </button>
+                            </span>
+                            <button type="button" class="w-7 h-7 flex items-center justify-center rounded-pill border border-slate-200 bg-white text-slate-400 hover:text-primary" title="Expand relations">
+                                <span class="material-symbols-outlined text-[16px]">expand_more</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
-                            <div id="data-tab-preview" class="hidden h-full flex flex-col">
-                                <div class="flex items-center gap-2 mb-2 shrink-0">
-                                    <span class="inline-flex items-center h-5 px-2 rounded-pill bg-white border border-slate-200 text-[9px] font-black uppercase tracking-widest text-slate-500 font-mono">
-                                        1,000 rows · 5 cols · 12 ms
-                                    </span>
-                                </div>
-                                <div class="flex-1 overflow-auto rounded-xl border border-slate-200 bg-white scrollbar-thin">
+                <!-- API Panel -->
+                <div id="api-data" class="hidden flex flex-col flex-1 min-h-0 overflow-hidden">
+                    <div class="px-6 py-3 border-b border-slate-200 flex items-center gap-3 shrink-0 bg-white">
+                        <select id="api-method"
+                            class="h-9 rounded-pill border border-slate-200 bg-white text-[10px] font-black uppercase tracking-widest text-slate-700 px-3 focus:ring-primary focus:border-primary">
+                            <option>GET</option>
+                            <option>POST</option>
+                            <option>PUT</option>
+                            <option>PATCH</option>
+                            <option>DELETE</option>
+                        </select>
+                        <input id="api-url" type="text" placeholder="https://api.example.com/v1/resource"
+                            class="flex-1 h-9 rounded-pill border border-slate-200 bg-white px-4 text-[11px] font-mono text-slate-800 focus:ring-primary focus:border-primary" />
+                        <button type="button"
+                            class="inline-flex items-center gap-1.5 h-9 px-4 rounded-pill bg-primary text-white text-[10px] font-black uppercase tracking-widest shadow-tactile hover:translate-y-[-1px] transition-all">
+                            <span class="material-symbols-outlined text-[14px]">send</span>
+                            Send
+                        </button>
+                    </div>
+
+                    <div class="px-6 py-2 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between shrink-0">
+                        <div class="inline-flex items-center h-8 rounded-pill bg-slate-50 border border-slate-200 p-0.5 gap-0.5 shadow-inner">
+                            <button type="button" data-api-tab="params"
+                                class="api-tab inline-flex items-center h-full px-3 rounded-pill bg-primary text-white text-[10px] font-black uppercase tracking-widest shadow-tactile">
+                                Params
+                            </button>
+                            <button type="button" data-api-tab="headers"
+                                class="api-tab inline-flex items-center h-full px-3 rounded-pill text-slate-500 hover:text-slate-900 hover:bg-white transition-colors text-[10px] font-black uppercase tracking-widest">
+                                Headers
+                            </button>
+                            <button type="button" data-api-tab="body"
+                                class="api-tab inline-flex items-center h-full px-3 rounded-pill text-slate-500 hover:text-slate-900 hover:bg-white transition-colors text-[10px] font-black uppercase tracking-widest">
+                                Body
+                            </button>
+                            <button type="button" data-api-tab="auth"
+                                class="api-tab inline-flex items-center h-full px-3 rounded-pill text-slate-500 hover:text-slate-900 hover:bg-white transition-colors text-[10px] font-black uppercase tracking-widest">
+                                Auth
+                            </button>
+                        </div>
+
+                        <span class="text-[9px] font-black uppercase tracking-widest text-slate-400 font-mono">
+                            Response · <span class="text-slate-700">—</span>
+                        </span>
+                    </div>
+
+                    <div class="flex-1 min-h-0 overflow-hidden flex">
+                        <div class="w-[55%] min-w-0 border-r border-slate-200 bg-white flex flex-col">
+                            <div id="api-tab-params" class="flex-1 overflow-auto p-4 space-y-2">
+                                <div class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Query Params</div>
+                                <div class="rounded-xl border border-slate-200 overflow-hidden">
                                     <table class="w-full text-left text-[11px] font-mono">
-                                        <thead class="sticky top-0 bg-slate-50 border-b border-slate-200">
+                                        <thead class="bg-slate-50 border-b border-slate-200">
                                             <tr>
-                                                <th class="px-3 py-2 font-black text-slate-500 uppercase tracking-widest text-[9px]">id</th>
-                                                <th class="px-3 py-2 font-black text-slate-500 uppercase tracking-widest text-[9px]">user_id</th>
-                                                <th class="px-3 py-2 font-black text-slate-500 uppercase tracking-widest text-[9px]">country</th>
-                                                <th class="px-3 py-2 font-black text-slate-500 uppercase tracking-widest text-[9px]">event_type</th>
-                                                <th class="px-3 py-2 font-black text-slate-500 uppercase tracking-widest text-[9px]">created_at</th>
+                                                <th class="px-3 py-2 text-[9px] font-black uppercase tracking-widest text-slate-500">Key</th>
+                                                <th class="px-3 py-2 text-[9px] font-black uppercase tracking-widest text-slate-500">Value</th>
                                             </tr>
                                         </thead>
                                         <tbody class="text-slate-700">
-                                            <tr class="border-b border-slate-100 hover:bg-primary-soft/30"><td class="px-3 py-1.5">10482</td><td class="px-3 py-1.5">a1b2-…</td><td class="px-3 py-1.5">IN</td><td class="px-3 py-1.5">signup</td><td class="px-3 py-1.5">2026-05-01</td></tr>
-                                            <tr class="border-b border-slate-100 hover:bg-primary-soft/30"><td class="px-3 py-1.5">10483</td><td class="px-3 py-1.5">c3d4-…</td><td class="px-3 py-1.5">US</td><td class="px-3 py-1.5">purchase</td><td class="px-3 py-1.5">2026-05-02</td></tr>
-                                            <tr class="border-b border-slate-100 hover:bg-primary-soft/30"><td class="px-3 py-1.5">10484</td><td class="px-3 py-1.5">e5f6-…</td><td class="px-3 py-1.5">DE</td><td class="px-3 py-1.5">view</td><td class="px-3 py-1.5">2026-05-03</td></tr>
-                                            <tr class="border-b border-slate-100 hover:bg-primary-soft/30"><td class="px-3 py-1.5">10485</td><td class="px-3 py-1.5">g7h8-…</td><td class="px-3 py-1.5">IN</td><td class="px-3 py-1.5">signup</td><td class="px-3 py-1.5">2026-05-04</td></tr>
-                                            <tr class="hover:bg-primary-soft/30"><td class="px-3 py-1.5">10486</td><td class="px-3 py-1.5">i9j0-…</td><td class="px-3 py-1.5">GB</td><td class="px-3 py-1.5">purchase</td><td class="px-3 py-1.5">2026-05-05</td></tr>
+                                            <tr class="border-b border-slate-100">
+                                                <td class="px-3 py-2"><input class="w-full bg-transparent border-0 p-0 focus:ring-0" placeholder="limit" /></td>
+                                                <td class="px-3 py-2"><input class="w-full bg-transparent border-0 p-0 focus:ring-0" placeholder="100" /></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="px-3 py-2"><input class="w-full bg-transparent border-0 p-0 focus:ring-0" placeholder="offset" /></td>
+                                                <td class="px-3 py-2"><input class="w-full bg-transparent border-0 p-0 focus:ring-0" placeholder="0" /></td>
+                                            </tr>
                                         </tbody>
                                     </table>
                                 </div>
                             </div>
 
-                            <div id="data-tab-filters" class="hidden h-full flex flex-col justify-start pt-2">
-                                <div class="flex flex-wrap items-center gap-2">
-                                    <span class="inline-flex items-center gap-1 h-7 pl-2 pr-1 rounded-pill bg-white border border-slate-200 text-[10px] font-mono text-slate-700">
-                                        country = "IN"
-                                        <button type="button" class="w-5 h-5 flex items-center justify-center rounded-pill hover:bg-slate-100 text-slate-400">
-                                            <span class="material-symbols-outlined text-[12px]">close</span>
-                                        </button>
+                            <div id="api-tab-headers" class="hidden flex-1 overflow-auto p-4 space-y-2">
+                                <div class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Headers</div>
+                                <div class="rounded-xl border border-slate-200 overflow-hidden">
+                                    <table class="w-full text-left text-[11px] font-mono">
+                                        <thead class="bg-slate-50 border-b border-slate-200">
+                                            <tr>
+                                                <th class="px-3 py-2 text-[9px] font-black uppercase tracking-widest text-slate-500">Key</th>
+                                                <th class="px-3 py-2 text-[9px] font-black uppercase tracking-widest text-slate-500">Value</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="text-slate-700">
+                                            <tr>
+                                                <td class="px-3 py-2"><input class="w-full bg-transparent border-0 p-0 focus:ring-0" placeholder="Authorization" /></td>
+                                                <td class="px-3 py-2"><input class="w-full bg-transparent border-0 p-0 focus:ring-0" placeholder="Bearer …" /></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div id="api-tab-body" class="hidden flex-1 overflow-hidden p-4">
+                                <div class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Body (JSON)</div>
+                                <textarea id="api-body"
+                                    class="w-full h-full rounded-xl border border-slate-200 bg-slate-50/40 p-3 font-mono text-[11px] text-slate-800 focus:ring-primary focus:border-primary"
+                                    placeholder='{"example":"payload"}'></textarea>
+                            </div>
+
+                            <div id="api-tab-auth" class="hidden flex-1 overflow-auto p-4 space-y-3">
+                                <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Auth</div>
+                                <label class="block">
+                                    <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">Type</span>
+                                    <select id="api-auth-type"
+                                        class="mt-1 w-full h-9 rounded-pill border border-slate-200 bg-white px-4 text-[11px] font-mono focus:ring-primary focus:border-primary">
+                                        <option value="None">None</option>
+                                        <option value="API Key">API Key</option>
+                                        <option value="Bearer Token">Bearer Token</option>
+                                        <option value="Basic Auth">Basic Auth</option>
+                                    </select>
+                                </label>
+                                <label class="block">
+                                    <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">Details</span>
+                                    <textarea id="api-auth-details"
+                                        class="mt-1 w-full h-32 rounded-xl border border-slate-200 bg-slate-50/40 p-3 font-mono text-[11px] text-slate-800 focus:ring-primary focus:border-primary"
+                                        placeholder='{"api_key":"..."}'></textarea>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="flex-1 min-w-0 bg-slate-50/50 flex flex-col">
+                            <div class="px-4 py-2 border-b border-slate-200 bg-white flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="inline-flex items-center h-6 px-2 rounded-pill bg-slate-50 border border-slate-200 text-[9px] font-black uppercase tracking-widest text-slate-500 font-mono">
+                                        Status · <span class="text-slate-900">—</span>
                                     </span>
-                                    <span class="inline-flex items-center gap-1 h-7 pl-2 pr-1 rounded-pill bg-white border border-slate-200 text-[10px] font-mono text-slate-700">
-                                        created_at &gt; '2026-04-01'
-                                        <button type="button" class="w-5 h-5 flex items-center justify-center rounded-pill hover:bg-slate-100 text-slate-400">
-                                            <span class="material-symbols-outlined text-[12px]">close</span>
-                                        </button>
+                                    <span class="inline-flex items-center h-6 px-2 rounded-pill bg-slate-50 border border-slate-200 text-[9px] font-black uppercase tracking-widest text-slate-500 font-mono">
+                                        Time · <span class="text-slate-900">—</span>
                                     </span>
-                                    <span class="inline-flex items-center gap-1 h-7 pl-2 pr-1 rounded-pill bg-primary-soft border border-primary/20 text-[10px] font-mono text-primary-dark">
-                                        event_type IN ('signup', 'purchase')
-                                        <button type="button" class="w-5 h-5 flex items-center justify-center rounded-pill hover:bg-primary/10 text-primary">
-                                            <span class="material-symbols-outlined text-[12px]">close</span>
-                                        </button>
+                                    <span class="inline-flex items-center h-6 px-2 rounded-pill bg-slate-50 border border-slate-200 text-[9px] font-black uppercase tracking-widest text-slate-500 font-mono">
+                                        Size · <span class="text-slate-900">—</span>
                                     </span>
-                                    <button type="button"
-                                        class="inline-flex items-center h-7 px-3 rounded-pill border-2 border-dashed border-slate-300 text-[9px] font-black uppercase tracking-widest text-slate-400 hover:border-primary/40 hover:text-primary transition-colors">
-                                        + Filter
+                                </div>
+                                <div class="inline-flex items-center h-7 rounded-pill bg-slate-50 border border-slate-200 p-0.5 gap-0.5 shadow-inner">
+                                    <button type="button" data-api-res-tab="body"
+                                        class="api-res-tab inline-flex items-center h-full px-2.5 rounded-pill bg-primary text-white text-[9px] font-black uppercase tracking-widest shadow-tactile">
+                                        Body
+                                    </button>
+                                    <button type="button" data-api-res-tab="headers"
+                                        class="api-res-tab inline-flex items-center h-full px-2.5 rounded-pill text-slate-500 hover:text-slate-900 hover:bg-white transition-colors text-[9px] font-black uppercase tracking-widest">
+                                        Headers
                                     </button>
                                 </div>
+                            </div>
+
+                            <div class="flex-1 min-h-0 overflow-hidden p-4">
+                                <pre id="api-response-body"
+                                    class="h-full w-full rounded-xl border border-slate-200 bg-white p-3 overflow-auto text-[11px] font-mono text-slate-800 whitespace-pre-wrap">
+{
+  "response": "Run a request to see output"
+}
+                                </pre>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-slate-50 border-y border-slate-200 px-6 py-2 flex items-center justify-between gap-4 shrink-0">
-                    <span class="text-[9px] font-black uppercase tracking-widest text-slate-400 font-mono">
-                        Relations · <span class="text-slate-700">3 pulled</span> · 12.4 MB
-                    </span>
-                    <div class="flex items-center gap-2 flex-wrap justify-end">
-                        <span class="inline-flex items-center gap-1 h-7 pl-2 pr-1 rounded-pill bg-white border border-slate-200 text-[10px] font-mono text-slate-700">
-                            <span class="material-symbols-outlined text-[14px] text-primary">database</span>
-                            events_30d
-                            <button type="button" class="w-6 h-6 flex items-center justify-center rounded-pill hover:bg-primary-soft text-slate-400 hover:text-primary" title="Open in notebook">
-                                <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+                <!-- Files -->
+                <div id="files-data" class="hidden flex flex-col flex-1 min-h-0 overflow-hidden">
+                    <div class="px-6 py-3 border-b border-slate-200 bg-white flex items-center justify-between shrink-0">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <span class="material-symbols-outlined text-[16px] text-primary">folder_open</span>
+                            <span class="text-[10px] font-black uppercase tracking-widest text-slate-600">Preview</span>
+                            <select id="file-entity"
+                                class="ml-2 h-8 rounded-pill border border-slate-200 bg-white text-[10px] font-black uppercase tracking-widest text-slate-700 px-3 focus:ring-primary focus:border-primary max-w-[420px]">
+                                <option value="" selected>Select file / sheet</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span id="file-meta-chip"
+                                class="inline-flex items-center h-7 px-2 rounded-pill bg-slate-50 border border-slate-200 text-[9px] font-black uppercase tracking-widest text-slate-500 font-mono">
+                                — rows · — cols
+                            </span>
+                            <button type="button"
+                                class="inline-flex items-center gap-1.5 h-8 px-3 rounded-pill bg-white border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-primary hover:border-primary/40 transition-all">
+                                Sample <span class="font-mono">100</span>
                             </button>
-                        </span>
-                        <span class="inline-flex items-center gap-1 h-7 pl-2 pr-1 rounded-pill bg-white border border-slate-200 text-[10px] font-mono text-slate-700">
-                            <span class="material-symbols-outlined text-[14px] text-primary">database</span>
-                            cohorts_q3
-                            <button type="button" class="w-6 h-6 flex items-center justify-center rounded-pill hover:bg-primary-soft text-slate-400 hover:text-primary" title="Open in notebook">
-                                <span class="material-symbols-outlined text-[14px]">open_in_new</span>
-                            </button>
-                        </span>
-                        <span class="inline-flex items-center gap-1 h-7 pl-2 pr-1 rounded-pill bg-white border border-slate-200 text-[10px] font-mono text-slate-700">
-                            <span class="material-symbols-outlined text-[14px] text-primary">database</span>
-                            dau_breakdown
-                            <button type="button" class="w-6 h-6 flex items-center justify-center rounded-pill hover:bg-primary-soft text-slate-400 hover:text-primary" title="Open in notebook">
-                                <span class="material-symbols-outlined text-[14px]">open_in_new</span>
-                            </button>
-                        </span>
-                        <button type="button" class="w-7 h-7 flex items-center justify-center rounded-pill border border-slate-200 bg-white text-slate-400 hover:text-primary" title="Expand relations">
-                            <span class="material-symbols-outlined text-[16px]">expand_more</span>
-                        </button>
+                        </div>
                     </div>
-                </div>
 
-                <div class="border-t border-slate-200 bg-white px-6 py-3 flex items-center justify-between gap-4 shrink-0">
-                    <div class="flex items-center gap-2 flex-wrap">
-                        <span class="inline-flex items-center h-8 px-2.5 rounded-pill bg-slate-900 text-white text-[9px] font-black uppercase tracking-widest">
-                            Materialize
-                        </span>
-                        <label class="inline-flex items-center h-8 rounded-pill border border-slate-200 bg-slate-50 pl-2.5 pr-2 gap-1.5">
-                            <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">Stream</span>
-                            <input type="text" value="stream_events_30d"
-                                class="w-36 bg-transparent border-0 font-mono text-[11px] text-slate-800 focus:ring-0 focus:outline-none p-0" />
-                        </label>
-                        <label class="inline-flex items-center h-8 rounded-pill border border-slate-200 bg-slate-50 pl-2.5 pr-2 gap-1.5">
-                            <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">Limit</span>
-                            <input type="text" value="1000"
-                                class="w-16 bg-transparent border-0 font-mono text-[11px] text-slate-800 focus:ring-0 focus:outline-none p-0" />
-                        </label>
+                    <div class="px-6 py-3 border-b border-slate-100 bg-slate-50/60 shrink-0">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">Schema</span>
+                            <span class="text-[9px] font-black uppercase tracking-widest text-slate-400 font-mono">
+                                Dtypes inferred
+                            </span>
+                        </div>
+                        <div id="file-schema-strip" class="mt-2 flex flex-wrap gap-1.5">
+                            <span class="inline-flex items-center gap-1.5 h-6 px-2 rounded-pill bg-white border border-slate-200 text-[9px] font-black uppercase tracking-widest text-slate-500">
+                                <span class="material-symbols-outlined text-[14px] text-slate-300">info</span>
+                                Select a file to see columns
+                            </span>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <button type="button"
-                            class="inline-flex items-center gap-1.5 h-8 px-3 rounded-pill bg-white border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-primary hover:border-primary/40 transition-all">
-                            Preview
-                        </button>
-                        <button type="button"
-                            class="inline-flex items-center gap-1.5 h-8 px-4 rounded-pill bg-primary text-white text-[10px] font-black uppercase tracking-widest shadow-tactile hover:translate-y-[-1px] transition-all">
-                            <span class="material-symbols-outlined text-[14px]">download</span>
-                            Pull to Local Volume
-                        </button>
+
+                    <div class="flex-1 min-h-0 overflow-hidden p-4 bg-white">
+                        <div class="h-full rounded-xl border border-slate-200 overflow-hidden bg-white data-component">
+                            <div class="h-full overflow-auto scrollbar-thin">
+                                <table class="w-full text-left">
+                                    <thead>
+                                        <tr id="file-preview-head">
+                                            <th>—</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="file-preview-body">
+                                        <tr>
+                                            <td class="text-slate-400 italic">Preview will appear here</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="px-6 py-3 border-t border-slate-200 bg-white flex items-center justify-between shrink-0">
+                        <span class="text-[9px] font-black uppercase tracking-widest text-slate-400 font-mono">
+                            Page · <span class="text-slate-700">1</span>
+                        </span>
+                        <div class="flex items-center gap-2">
+                            <button type="button"
+                                class="inline-flex items-center gap-1.5 h-8 px-3 rounded-pill bg-white border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-primary hover:border-primary/40 transition-all">
+                                Prev
+                            </button>
+                            <button type="button"
+                                class="inline-flex items-center gap-1.5 h-8 px-3 rounded-pill bg-primary text-white text-[10px] font-black uppercase tracking-widest shadow-tactile hover:translate-y-[-1px] transition-all">
+                                Next
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1138,14 +1279,12 @@ LIMIT 1000;</code><span class="inline-block w-2 h-4 bg-primary animate-pulse ali
                 <div class="px-3 py-1.5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         <span class="material-symbols-outlined text-xs text-primary">database</span>
-                        <select id="selected_db_id" name="selected_db_id"
-                            class="bg-transparent border-none p-0 text-[10px] font-black text-slate-600 focus:ring-0 cursor-pointer uppercase tracking-tight">
-                            <option value="" disabled selected>Select Context</option>
-                            {% for conn in connections %}
-                            <option value="{{ conn.id }}">{{ conn.db_type }} - {{ conn.display_name or conn.name }}
-                            </option>
-                            {% endfor %}
-                        </select>
+                        <button id="chat-conn-chip" type="button"
+                            class="inline-flex items-center gap-1.5 h-6 px-2 rounded-pill bg-white border border-slate-200 text-[9px] font-black uppercase tracking-widest text-slate-600 hover:text-primary hover:border-primary/30 transition-all"
+                            onclick="document.getElementById('selected_db_id')?.focus()">
+                            Select Context
+                            <span class="material-symbols-outlined text-[14px] text-slate-300">expand_more</span>
+                        </button>
                     </div>
 
                     <div class="flex items-center bg-slate-100 rounded-lg p-0.5 gap-0.5">
@@ -1203,7 +1342,6 @@ LIMIT 1000;</code><span class="inline-block w-2 h-4 bg-primary animate-pulse ali
                 <span class="sidebar-tip">AI</span>
             </button>
         </section>
-
     </main>
 
     <script>
@@ -1213,6 +1351,7 @@ LIMIT 1000;</code><span class="inline-block w-2 h-4 bg-primary animate-pulse ali
     <script src="{{ url_for('static', filename='js/sidepanel.js') }}"></script>
     <script src="{{ url_for('static', filename='js/MIME.js') }}"></script>
     <script src="{{ url_for('static', filename='js/notebook.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/data.js') }}"></script>
     <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
     <script src="{{ url_for('static', filename='js/workspace.js') }}"></script>
     <script>

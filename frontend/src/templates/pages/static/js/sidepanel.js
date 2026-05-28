@@ -1,6 +1,10 @@
 // ─── Sidebar ────────────────────────────────────────────────
 let activeSidePanel = null;
 
+function _getConnections() {
+    return Array.isArray(window.SPORE_CONNECTIONS) ? window.SPORE_CONNECTIONS : [];
+}
+
 function openSidePanel(name) {
     const panel = document.getElementById('side-panel');
 
@@ -23,7 +27,7 @@ function openSidePanel(name) {
     if (tab) tab.classList.add('active');
 
     // Slide in — translate instead of width, no layout shift
-    panel.style.transform = 'translateX(0)';
+    panel.style.width = '220px';
     activeSidePanel = name;
 
     if (name === 'files') loadStreams();
@@ -31,7 +35,7 @@ function openSidePanel(name) {
 
 function closeSidePanel() {
     const panel = document.getElementById('side-panel');
-    panel.style.transform = 'translateX(-220px)';
+    panel.style.width = '0px';
     document.querySelectorAll('.sidebar-tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.side-panel-content').forEach(p => {
         p.classList.add('hidden');
@@ -40,19 +44,55 @@ function closeSidePanel() {
     activeSidePanel = null;
 }
 
-// Close on click outside
-document.addEventListener('click', (e) => {
-    if (!activeSidePanel) return;
-    const sidebar = document.getElementById('sidebar');
-    if (!sidebar.contains(e.target)) closeSidePanel();
-});
-
 // Global variable to store current metadata
 let currentMetadata = null;
 
+function _setChatConnChip(conn) {
+    const chip = document.getElementById('chat-conn-chip');
+    if (!chip) return;
+    const label = conn?.display_name || conn?.name || 'Select Context';
+    chip.childNodes[0].textContent = `${label} `;
+}
+
+function onActiveConnectionChange(connId) {
+    const conns = _getConnections();
+    const conn = conns.find(c => String(c.id) === String(connId));
+    if (!conn) return;
+
+    // Workspace-level updates (defined in workspace.js)
+    if (typeof window.setDataKind === 'function') window.setDataKind(conn);
+    if (typeof window.updateDataHeader === 'function') window.updateDataHeader(conn);
+
+    _setChatConnChip(conn);
+    updateSchemaPanel(connId);
+}
+
+// Auto-open side panel and preselect first connection
+document.addEventListener('DOMContentLoaded', () => {
+    const conns = _getConnections();
+    const select = document.getElementById('selected_db_id');
+    if (!select) return;
+
+    if (!conns.length) {
+        _setChatConnChip(null);
+        return;
+    }
+
+    // Open the source browser by default.
+    openSidePanel('database');
+
+    // If nothing selected, select the first connection.
+    if (!select.value) {
+        select.value = String(conns[0].id);
+    }
+
+    // Always route the current value so preselected/persisted values hydrate too.
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+});
+
 // Listen for dropdown changes
-document.getElementById('selected_db_id').addEventListener('change', function(e) {
-    updateSchemaPanel(e.target.value);
+document.getElementById('selected_db_id')?.addEventListener('change', function(e) {
+    onActiveConnectionChange(e.target.value);
 });
 
 async function updateSchemaPanel(dbId) {
@@ -82,36 +122,98 @@ function renderMetadata(meta) {
     const tableCount = document.getElementById('table-count');
     const schemaName = document.getElementById('schema-name');
 
-    // Update Header Stats
-    dbNameLabel.innerText = meta.database || 'Postgres';
-    tableCount.innerText = meta.table_count || 0;
-    schemaName.innerText = meta.schema || 'public';
+    const kind = meta?.kind || (meta?.tables ? 'database' : null);
+
+    // Update Header Stats (kind-aware)
+    if (kind === 'file') {
+        dbNameLabel.innerText = 'Files';
+        const entities = meta?.entities || {};
+        tableCount.innerText = Object.keys(entities).length;
+        schemaName.innerText = '—';
+    } else if (kind === 'api') {
+        dbNameLabel.innerText = 'API';
+        const entities = meta?.entities || {};
+        tableCount.innerText = Object.keys(entities).length;
+        schemaName.innerText = '—';
+    } else {
+        dbNameLabel.innerText = meta.database || meta.project || 'Source';
+        tableCount.innerText = meta.table_count || Object.keys(meta.tables || {}).length || 0;
+        schemaName.innerText = meta.schema || meta.dataset || 'public';
+    }
 
     let html = '';
 
-    // Loop through tables in the metadata
-    Object.entries(meta.tables).forEach(([tableName, details]) => {
+    if (kind === 'api') {
+        const baseUrl = meta?.base_url || meta?.endpoint || '';
         html += `
-        <div class="group border border-transparent hover:border-slate-100 rounded-lg transition-all">
-            <button onclick="this.nextElementSibling.classList.toggle('hidden')" 
-                class="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-slate-50 rounded-md transition-all text-left">
-                <span class="material-symbols-outlined text-[14px] text-slate-400 group-hover:text-primary">table_chart</span>
-                <div class="flex flex-col">
-                    <span class="text-[10px] font-black text-slate-700 leading-none">${tableName}</span>
-                    <span class="text-[8px] text-slate-400 font-bold uppercase tracking-tighter">${details.row_count} rows • ${details.size_pretty}</span>
+            <div class="px-2 py-2">
+                <div class="rounded-lg border border-slate-100 bg-slate-50/60 p-2">
+                    <div class="text-[8px] font-black uppercase tracking-widest text-slate-400 mb-1">Base URL</div>
+                    <div class="text-[10px] font-mono text-slate-700 break-all">${baseUrl || '—'}</div>
                 </div>
-                <span class="material-symbols-outlined ml-auto text-[12px] text-slate-300">expand_more</span>
-            </button>
-            
-            <div class="hidden pl-7 pr-2 pb-2 space-y-1 mt-1 border-l-2 border-slate-100 ml-3">
-                ${details.columns.map((col, idx) => `
-                    <div class="flex items-center justify-between group/row">
-                        <span class="text-[9px] font-bold text-slate-500">${col}</span>
-                        <span class="text-[8px] font-mono text-slate-300 group-hover/row:text-primary transition-colors">${details.column_types[col]}</span>
-                    </div>
-                `).join('')}
             </div>
-        </div>`;
+            <div class="text-[9px] text-slate-400 text-center py-10 font-bold italic">
+                Saved requests will appear here
+            </div>
+        `;
+        treeContainer.innerHTML = html;
+        return;
+    }
+
+    if (kind === 'file') {
+        const entities = meta?.entities || {};
+        Object.entries(entities).forEach(([name, details]) => {
+            const cols = Array.isArray(details?.columns) ? details.columns : [];
+            const types = details?.column_types || {};
+            html += `
+                <div class="group border border-transparent hover:border-slate-100 rounded-lg transition-all">
+                    <button onclick="this.nextElementSibling.classList.toggle('hidden')" 
+                        class="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-slate-50 rounded-md transition-all text-left">
+                        <span class="material-symbols-outlined text-[14px] text-slate-400 group-hover:text-primary">description</span>
+                        <div class="flex flex-col min-w-0">
+                            <span class="text-[10px] font-black text-slate-700 leading-none truncate">${name}</span>
+                            <span class="text-[8px] text-slate-400 font-bold uppercase tracking-tighter">${details?.size_pretty || ''}</span>
+                        </div>
+                        <span class="material-symbols-outlined ml-auto text-[12px] text-slate-300">expand_more</span>
+                    </button>
+                    <div class="hidden pl-7 pr-2 pb-2 space-y-1 mt-1 border-l-2 border-slate-100 ml-3">
+                        ${cols.map((col) => `
+                            <div class="flex items-center justify-between group/row">
+                                <span class="text-[9px] font-bold text-slate-500">${col}</span>
+                                <span class="text-[8px] font-mono text-slate-300 group-hover/row:text-primary transition-colors">${types[col] || ''}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        });
+
+        treeContainer.innerHTML = html || `<div class="text-[9px] text-slate-400 text-center py-8 font-bold">No file metadata</div>`;
+        return;
+    }
+
+    // Default: DB/Warehouse table tree
+    Object.entries(meta.tables || {}).forEach(([tableName, details]) => {
+        html += `
+            <div class="group border border-transparent hover:border-slate-100 rounded-lg transition-all">
+                <button onclick="this.nextElementSibling.classList.toggle('hidden')" 
+                    class="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-slate-50 rounded-md transition-all text-left">
+                    <span class="material-symbols-outlined text-[14px] text-slate-400 group-hover:text-primary">table_chart</span>
+                    <div class="flex flex-col">
+                        <span class="text-[10px] font-black text-slate-700 leading-none">${tableName}</span>
+                        <span class="text-[8px] text-slate-400 font-bold uppercase tracking-tighter">${details.row_count} rows • ${details.size_pretty}</span>
+                    </div>
+                    <span class="material-symbols-outlined ml-auto text-[12px] text-slate-300">expand_more</span>
+                </button>
+                <div class="hidden pl-7 pr-2 pb-2 space-y-1 mt-1 border-l-2 border-slate-100 ml-3">
+                    ${(details.columns || []).map((col) => `
+                        <div class="flex items-center justify-between group/row">
+                            <span class="text-[9px] font-bold text-slate-500">${col}</span>
+                            <span class="text-[8px] font-mono text-slate-300 group-hover/row:text-primary transition-colors">${(details.column_types || {})[col] || ''}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>`;
     });
 
     treeContainer.innerHTML = html || `<div class="text-[9px] text-slate-400 text-center py-8 font-bold">Schema is empty</div>`;

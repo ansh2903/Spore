@@ -10,7 +10,7 @@ function toggleChatPanel() {
     gutter.classList.toggle('hidden');
     panel.classList.toggle('hidden');
 }
-
+ 
 document.addEventListener('DOMContentLoaded', () => {
     const resizer = document.getElementById('resizer');
     const panel = document.getElementById('chat-panel');

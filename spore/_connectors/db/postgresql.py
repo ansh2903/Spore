@@ -30,7 +30,6 @@ import adbc_driver_postgresql.dbapi as pg
 
 from ..base import BaseSource, SourceKind, SourceCapabilities
 from spore._logger import logging
-from spore._utils import is_running_in_docker
 from spore._config.settings import settings
 
 
@@ -65,33 +64,32 @@ class PostgreSQLSource(BaseSource):
 
     # ── BaseSource contract ───────────────────────────────────────────────────
 
-    def _create_connection(self, host: str, port: int) -> Any:
+    def _postgres_uri(self, host: str, port: int | None) -> str:
+        """Build a PostgreSQL connection URI with URL-encoded credentials and SSL params."""
+        c = self.config
+        s = self.security_config
+        user = urllib.parse.quote_plus(c["user"])
+        password = urllib.parse.quote_plus(c["password"])
+        database = urllib.parse.quote_plus(c.get("database") or c.get("dbname", ""))
+        effective_port = port if port is not None else 5432
+        uri = f"postgresql://{user}:{password}@{host}:{effective_port}/{database}"
+
+        params = {"sslmode": s.ssl_mode}
+        if s.ca_cert_path:
+            params["sslrootcert"] = s.ca_cert_path
+        if s.client_cert_path:
+            params["sslcert"] = s.client_cert_path
+        if s.client_key_path:
+            params["sslkey"] = s.client_key_path
+        return uri + "?" + urllib.parse.urlencode(params)
+
+    def _create_connection(self, host: str, port: int | None) -> Any:
         """
         Receives already-resolved host/port from connection_context().
         SSH tunnel binding and local Docker routing are handled upstream.
         Uses ADBC for columnar format
         """
-        c = self.config
-        s = self.security_config
-
-        user     = urllib.parse.quote_plus(c["user"])
-        password = urllib.parse.quote_plus(c["password"])
-        database   = urllib.parse.quote_plus(c["database"])
-        uri      = f"postgresql://{user}:{password}@{host}:{port}/{database}"
-
-        params = {"sslmode": s.ssl_mode}
-        if s.ca_cert_path:     params["sslrootcert"] = s.ca_cert_path
-        if s.client_cert_path: params["sslcert"]     = s.client_cert_path
-        if s.client_key_path:  params["sslkey"]      = s.client_key_path
-        uri += "?" + urllib.parse.urlencode(params)
-
-        return pg.connect(uri)
-
-    def _close_connection(self, conn: Any) -> None:
-        try:
-            conn.close()
-        except Exception:
-            pass
+        return pg.connect(self._postgres_uri(host, port))
 
     # ── test_connection ───────────────────────────────────────────────────────
 
@@ -316,13 +314,8 @@ class PostgreSQLSource(BaseSource):
 
         try:
             transport = self.transport_config
-            c         = self.config
-            s         = self.security_config
-            host      = c.get("host", "127.0.0.1")
-            port      = int(c.get("port", 5432))
-
-            if is_running_in_docker() and host in ("localhost", "127.0.0.1", "Localhost"):
-                host = "host.docker.internal"
+            c = self.config
+            host, port = self._resolve_host_port()
 
             if transport.use_ssh_tunnel:
                 from sshtunnel import SSHTunnelForwarder
@@ -336,21 +329,10 @@ class PostgreSQLSource(BaseSource):
                 host = "127.0.0.1"
                 port = tunnel.local_bind_port
 
-            u      = urllib.parse.quote_plus(c["user"])
-            pw     = urllib.parse.quote_plus(c["password"])
-            database = c.get("database") or c.get("dbname", "")
-            db     = urllib.parse.quote_plus(database)
-            pg_uri = f"postgresql://{u}:{pw}@{host}:{port}/{db}"
-
-            if s.ssl_mode != "disable":
-                params = {"sslmode": s.ssl_mode}
-                if s.ca_cert_path:     params["sslrootcert"] = s.ca_cert_path
-                if s.client_cert_path: params["sslcert"]     = s.client_cert_path
-                if s.client_key_path:  params["sslkey"]      = s.client_key_path
-                pg_uri += "?" + urllib.parse.urlencode(params)
+            pg_uri = self._postgres_uri(host, port)
 
             duck = duckdb.connect(":memory:")
-            duck.execute(f"SET memory_limit = '1GB';")
+            duck.execute(f"SET memory_limit = '{memory_ceiling}';")
             duck.execute("INSTALL postgres; LOAD postgres;")
             duck.execute(f"ATTACH '{pg_uri}' AS remote_db (TYPE POSTGRES);")
             duck.execute("USE remote_db;")
@@ -359,8 +341,7 @@ class PostgreSQLSource(BaseSource):
             if schema:
                 duck.execute(f"SET search_path = {_qi(schema)};")
 
-# for now for demo just use dont think of a batch
-            reader = duck.sql(query).fetch_arrow_reader(1000)
+            reader = duck.sql(query).fetch_arrow_reader(batch_row_size)
             total_rows = 0
 
             for batch in reader:
@@ -368,6 +349,15 @@ class PostgreSQLSource(BaseSource):
                     writer = pq.ParquetWriter(source_path, batch.schema, compression="snappy")
                 writer.write_batch(batch)
                 total_rows += batch.num_rows
+
+            if writer is None:
+                arrow_schema = duck.sql(query).arrow().schema
+                empty_arrays = [
+                    pa.array([], type=arrow_schema.field(i).type)
+                    for i in range(arrow_schema.num_fields)
+                ]
+                empty_table = pa.table(empty_arrays, names=arrow_schema.names)
+                pq.write_table(empty_table, source_path, compression="snappy")
 
             logging.info(f"[postgresql] ingested {total_rows} rows → {source_path}")
             return "success", stream_dir

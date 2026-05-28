@@ -73,36 +73,6 @@ VENDOR_CONFIG = [
             },
             "features": {"supports_ssh": True, "supports_ssl": True}
         },
-        "mysql": {
-            "metadata": {
-                "id": "mysql",
-                "label": "MySQL",
-                "kind": "database",
-                "image": "icons/mysql.png",
-            },
-            "fields": {
-                "name": {"label": "Connection Name", "type": "text", "required": True},
-                "host": {"label": "Host", "type": "text", "required": True},
-                "port": {"label": "Port", "type": "number", "default": 3306, "required": True},
-                "database": {"label": "Database Name", "type": "text", "required": True},
-                "user": {"label": "Username", "type": "text", "required": True},
-                "password": {"label": "Password", "type": "password", "required": True}
-            },
-            "features": {"supports_ssh": True, "supports_ssl": True}
-        },
-        "sqlite": {
-            "metadata": {
-                "id": "sqlite",
-                "label": "SQLite",
-                "kind": "database",
-                "image": "icons/SQLite.png",
-            },
-            "fields": {
-                "name": {"label": "Connection Name", "type": "text", "required": True},
-                "file": {"label": "Database File (.sqlite, .db)", "type": "file", "required": True}
-            },
-            "features": {"supports_ssh": False, "supports_ssl": False}
-        }
     }),
 
     ("Data Warehouses", {
@@ -114,7 +84,6 @@ VENDOR_CONFIG = [
                 "image": "icons/BigQuery.png",
             },
             "fields": {
-                "name": {"label": "Connection Name", "type": "text", "required": True},
                 "project_id": {"label": "GCP Project ID", "type": "text", "required": True},
                 "dataset_id": {"label": "Dataset ID", "type": "text", "required": True},
                 "service_account_json": {"label": "Service Account JSON Key", "type": "file", "required": True}
@@ -129,7 +98,6 @@ VENDOR_CONFIG = [
                 "image": "icons/snowflake.png",
             },
             "fields": {
-                "name": {"label": "Connection Name", "type": "text", "required": True},
                 "account_identifier": {"label": "Account Identifier", "type": "text", "placeholder": "xy12345.us-east-1", "required": True},
                 "warehouse": {"label": "Warehouse", "type": "text", "required": True},
                 "database": {"label": "Database", "type": "text", "required": True},
@@ -139,37 +107,74 @@ VENDOR_CONFIG = [
             "features": {"supports_ssh": False, "supports_ssl": True}
         }
     }),
-
     ("APIs", {
         "rest_api": {
             "metadata": {
                 "id": "rest_api",
                 "label": "REST API",
                 "kind": "api",
-                "image": "",
+                "image": "icons/rest_api.png",
             },
             "fields": {
-                "name": {"label": "Connection Name", "type": "text", "required": True},
-                "endpoint": {"label": "Base URL", "type": "text", "placeholder": "https://api.example.com/v1", "required": True},
-                "auth_type": {"label": "Auth Type", "type": "select", "options": ["None", "Bearer Token", "API Key", "Basic Auth"], "default": "None"},
-                "token": {"label": "Token / Key", "type": "password", "required": False}
+                "endpoint": {"label": "API Endpoint", "type": "text", "placeholder": "https://api.example.com/data", "required": True},
+                "auth_type": {"label": "Authentication Type", "type": "select", "options": ["None", "API Key", "Bearer Token", "Basic Auth"], "default": "None", "required": True},
+                "auth_details": {"label": "Authentication Details", "type": "json", "placeholder": '{"api_key": "your_api_key_here"}', "required": False}
+            },
+            "features": {"supports_ssh": False, "supports_ssl": True}
+        },
+        "graphql_api": {
+            "metadata": {
+                "id": "graphql_api",
+                "label": "GraphQL API",
+                "kind": "api",
+                "image": "icons/graphql.png",
+            },
+            "fields": {
+                "endpoint": {"label": "API Endpoint", "type": "text", "placeholder": "https://api.example.com/graphql", "required": True},
+                "auth_type": {"label": "Authentication Type", "type": "select", "options": ["None", "API Key", "Bearer Token", "Basic Auth"], "default": "None", "required": True},
+                "auth_details": {"label": "Authentication Details", "type": "json", "placeholder": '{"api_key": "your_api_key_here"}', "required": False}
             },
             "features": {"supports_ssh": False, "supports_ssl": True}
         }
     }),
-
     ("Local Files", {
         "csv_file": {
             "metadata": {
                 "id": "csv_file",
                 "label": "CSV File",
                 "kind": "file",
-                "image": "",
+                "image": "icons/csv.png",
             },
             "fields": {
-                "name": {"label": "Connection Name", "type": "text", "required": True},
-                "file": {"label": "Upload CSV", "type": "file", "required": True},
-                "delimiter": {"label": "Delimiter", "type": "text", "default": ",", "required": True}
+                "file_path": {"label": "File Path", "type": "file", "required": True},
+                "delimiter": {"label": "Delimiter", "type": "text", "default": ",", "required": False},
+                "has_header": {"label": "Has Header Row", "type": "checkbox", "default": True, "required": False}
+            },
+            "features": {"supports_ssh": False, "supports_ssl": False}
+        },
+        "excel_file": {
+            "metadata": {
+                "id": "excel_file",
+                "label": "Excel File",
+                "kind": "file",
+                "image": "icons/excel.png",
+            },
+            "fields": {
+                "file_path": {"label": "File Path", "type": "file", "required": True},
+                "sheet_name": {"label": "Sheet Name", "type": "text", "default": "Sheet1", "required": False}
+            },
+            "features": {"supports_ssh": False, "supports_ssl": False}
+        },
+        "json_file": {
+            "metadata": {
+                "id": "json_file",
+                "label": "JSON File",
+                "kind": "file",
+                "image": "icons/json.png",
+            },
+            "fields": {
+                "file_path": {"label": "File Path", "type": "file", "required": True},
+                "is_nested": {"label": "Is Nested JSON", "type": "checkbox", "default": False, "required": False}
             },
             "features": {"supports_ssh": False, "supports_ssl": False}
         }

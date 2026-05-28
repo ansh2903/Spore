@@ -180,9 +180,8 @@
             const searchMatch = label.toLowerCase().includes(s);
             return tabMatch && searchMatch;
         },
-        categoryVisible(items, categoryName) {
-            // Checks if at least one item in the category matches the search/tab
-            return Object.values(items).some(cfg => this.matches(cfg.metadata.label, categoryName));
+        categoryVisible(labels, categoryName) {
+            return labels.some(label => this.matches(label, categoryName));
         }
       }">
 
@@ -239,8 +238,9 @@
             <!-- Grid Area -->
             <div class="max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
                 {% for category_name, items in source %}
+                {% set category_labels = items.values() | map(attribute='metadata.label') | list %}
                 <!-- Category Section -->
-                <div class="mb-8" x-show="categoryVisible({{ items | tojson | safe }}, '{{ category_name }}')" x-cloak>
+                <div class="mb-8" x-show='categoryVisible({{ category_labels | tojson }}, "{{ category_name }}")' x-cloak>
                     <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-3">
                         {{ category_name }}
                         <span class="h-[1px] flex-1 bg-slate-100"></span>

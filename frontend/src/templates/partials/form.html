@@ -102,7 +102,7 @@
                         {{ config.fields.port.label }}
                         {% if config.fields.port.required %}<span class="text-primary">*</span>{% endif %}
                     </label>
-                    <input type="text" name="port" class="f-input"
+                    <input type="number" name="port" class="f-input" min="1" max="65535"
                         value="{{ config.fields.port.default | default('') }}"
                         placeholder="{{ config.fields.port.default }}" {% if
                         config.fields.port.required %}required{% endif %} />
@@ -116,7 +116,7 @@
                 {% for field_id, field in config.fields.items() %}
                 {% if field_id not in ['host', 'port'] %}
 
-                <div class="{% if field.full_width %}col-span-2{% endif %} space-y-1.5">
+                <div class="{% if field.full_width %}md:col-span-2{% endif %} space-y-1.5">
                     <label class="f-label">
                         {{ field.label }}
                         {% if field.required %}<span class="text-primary">*</span>{% endif %}
@@ -126,9 +126,8 @@
                     </label>
 
                     {# START UNIFIED CONDITIONAL #}
-                    {% if field.type == 'password' %}
+                    {% if field.type == 'password' and field.supports_mtls %}
                         <div x-data="{ authMethod: 'password' }" class="space-y-2">
-                            <!-- Auth Method Toggle -->
                             <div class="bg-slate-50/50 p-1 rounded-xl flex gap-1 border border-slate-100">
                                 <button type="button" @click="authMethod = 'password'"
                                         :class="authMethod === 'password' ? 'bg-white shadow-sm text-primary' : 'text-slate-400'"
@@ -141,42 +140,72 @@
                                     Key / Cert
                                 </button>
                             </div>
-                            
+
                             <input type="hidden" name="auth_strategy" :value="authMethod">
 
-                            <!-- Password Input -->
                             <div x-show="authMethod === 'password'" x-data="{ show: false }" class="relative">
                                 <input :type="show ? 'text' : 'password'"
                                     name="{{ field_id }}"
                                     class="f-input pr-10"
                                     placeholder="••••••••"
                                     :required="authMethod === 'password'" />
-                                <button type="button" @click="show = !show" 
+                                <button type="button" @click="show = !show"
                                         class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors">
                                     <span class="material-symbols-outlined" style="font-size:15px;" x-text="show ? 'visibility_off' : 'visibility'"></span>
                                 </button>
                             </div>
 
-                            <!-- Certificate Inputs (mTLS) -->
-                            <div x-show="authMethod === 'certificate'" 
+                            <div x-show="authMethod === 'certificate'"
                                 class="grid grid-cols-2 gap-2.5 animate-in fade-in slide-in-from-top-1">
                                 <div x-data="fileField()">
-                                    <input type="hidden" name="client_cert_path" :value="path" />
-                                    <label class="flex items-center gap-2 px-3 py-2.5 bg-white border border-dashed border-slate-200 rounded-xl cursor-pointer hover:border-emerald-400/50 transition-all group">
+                                    <label class="flex items-center gap-2 px-3 py-2.5 bg-white border border-dashed border-slate-200 rounded-xl cursor-pointer hover:border-emerald-400/50 transition-all group relative">
                                         <span class="material-symbols-outlined text-slate-300 group-hover:text-emerald-500" style="font-size:16px;">upload_file</span>
                                         <span class="text-[10px] font-bold text-slate-500 truncate" x-text="name || 'Cert (.crt)'"></span>
-                                        <input type="file" @change="handle($event)" class="hidden" :required="authMethod === 'certificate'">
+                                        <input type="file" name="sslcert" @change="handle($event)" accept=".crt,.pem"
+                                            class="absolute inset-0 opacity-0 cursor-pointer w-full" :required="authMethod === 'certificate'">
                                     </label>
                                 </div>
                                 <div x-data="fileField()">
-                                    <input type="hidden" name="client_key_path" :value="path" />
-                                    <label class="flex items-center gap-2 px-3 py-2.5 bg-white border border-dashed border-slate-200 rounded-xl cursor-pointer hover:border-emerald-400/50 transition-all group">
+                                    <label class="flex items-center gap-2 px-3 py-2.5 bg-white border border-dashed border-slate-200 rounded-xl cursor-pointer hover:border-emerald-400/50 transition-all group relative">
                                         <span class="material-symbols-outlined text-slate-300 group-hover:text-emerald-500" style="font-size:16px;">key</span>
                                         <span class="text-[10px] font-bold text-slate-500 truncate" x-text="name || 'Key (.key)'"></span>
-                                        <input type="file" @change="handle($event)" class="hidden" :required="authMethod === 'certificate'">
+                                        <input type="file" name="sslkey" @change="handle($event)" accept=".key,.pem"
+                                            class="absolute inset-0 opacity-0 cursor-pointer w-full" :required="authMethod === 'certificate'">
                                     </label>
                                 </div>
                             </div>
+                        </div>
+
+                    {% elif field.type == 'password' %}
+                        <div x-data="{ show: false }" class="relative">
+                            <input :type="show ? 'text' : 'password'"
+                                name="{{ field_id }}"
+                                class="f-input pr-10"
+                                placeholder="••••••••"
+                                {% if field.required %}required{% endif %} />
+                            <button type="button" @click="show = !show"
+                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors">
+                                <span class="material-symbols-outlined" style="font-size:15px;" x-text="show ? 'visibility_off' : 'visibility'"></span>
+                            </button>
+                        </div>
+
+                    {% elif field.type == 'file' %}
+                        <div x-data="fileField()" class="relative">
+                            <label
+                                class="flex items-center gap-3 px-3.5 py-2.5 bg-white border-[1.5px] border-dashed border-slate-200 rounded-xl hover:border-emerald-300 cursor-pointer transition-all group">
+                                <span class="material-symbols-outlined shrink-0 transition-colors" style="font-size:16px;"
+                                    :class="name ? 'text-emerald-500' : 'text-slate-300 group-hover:text-emerald-400'"
+                                    x-text="name ? 'description' : 'upload_file'"></span>
+                                <span class="text-[11px] font-bold truncate" :class="name ? 'text-slate-700' : 'text-slate-400'"
+                                    x-text="name || '{{ field.placeholder | default('Choose file') }}'"></span>
+                                <button type="button" x-show="name" @click.stop="clear()"
+                                    class="ml-auto shrink-0 text-slate-300 hover:text-red-400 transition-colors">
+                                    <span class="material-symbols-outlined" style="font-size:14px;">close</span>
+                                </button>
+                                <input type="file" name="{{ field_id }}" @change="handle($event)"
+                                    class="absolute inset-0 opacity-0 cursor-pointer w-full"
+                                    {% if field.required %}required{% endif %} />
+                            </label>
                         </div>
 
                     {% elif field.type == 'select' %}
@@ -257,7 +286,6 @@
 
                 {% if f.type == 'file' %}
                 <div x-data="fileField()" class="relative">
-                    <input type="hidden" name="{{ f_id }}" :value="path" />
                     <label
                         class="flex items-center gap-3 px-3.5 py-2.5 bg-white border-[1.5px] border-dashed border-slate-200 rounded-xl hover:border-emerald-300 cursor-pointer transition-all group">
                         <span class="material-symbols-outlined shrink-0 transition-colors" style="font-size:16px;"
@@ -269,7 +297,7 @@
                             class="ml-auto shrink-0 text-slate-300 hover:text-red-400 transition-colors">
                             <span class="material-symbols-outlined" style="font-size:14px;">close</span>
                         </button>
-                        <input type="file" @change="handle($event)" accept=".pem,.key"
+                        <input type="file" name="{{ f_id }}" @change="handle($event)" accept=".pem,.key"
                             class="absolute inset-0 opacity-0 cursor-pointer w-full" :disabled="!on" />
                     </label>
                 </div>
@@ -328,7 +356,6 @@
             <!-- CA cert: verify-ca and verify-full -->
             <div x-show="mode === 'verify-ca' || mode === 'verify-full'" x-data="fileField()">
                 <label class="f-label">CA Certificate</label>
-                <input type="hidden" name="sslrootcert" :value="path" />
                 <label
                     class="flex items-center gap-3 px-3.5 py-2.5 bg-white border-[1.5px] border-dashed border-slate-200 rounded-xl hover:border-emerald-300 cursor-pointer transition-all group relative">
                     <span
@@ -340,7 +367,7 @@
                         class="ml-auto text-slate-300 hover:text-red-400 transition-colors">
                         <span class="material-symbols-outlined" style="font-size:14px;">close</span>
                     </button>
-                    <input type="file" @change="handle($event)" accept=".crt,.pem,.cer"
+                    <input type="file" name="sslrootcert" @change="handle($event)" accept=".crt,.pem,.cer"
                         class="absolute inset-0 opacity-0 cursor-pointer w-full" :disabled="!on" />
                 </label>
             </div>
@@ -349,7 +376,6 @@
             <div x-show="mode === 'verify-full'" class="grid grid-cols-2 gap-2.5">
                 <div x-data="fileField()">
                     <label class="f-label">Client Certificate</label>
-                    <input type="hidden" name="sslcert" :value="path" />
                     <label
                         class="flex items-center gap-2.5 px-3.5 py-2.5 bg-white border-[1.5px] border-dashed border-slate-200 rounded-xl hover:border-emerald-300 cursor-pointer transition-all group relative">
                         <span
@@ -357,13 +383,12 @@
                             style="font-size:15px;" x-text="name ? 'description' : 'upload_file'"></span>
                         <span class="text-[10px] font-bold truncate" :class="name ? 'text-slate-700' : 'text-slate-400'"
                             x-text="name || '.crt / .pem'"></span>
-                        <input type="file" @change="handle($event)" accept=".crt,.pem"
+                        <input type="file" name="sslcert" @change="handle($event)" accept=".crt,.pem"
                             class="absolute inset-0 opacity-0 cursor-pointer w-full" :disabled="!on" />
                     </label>
                 </div>
                 <div x-data="fileField()">
                     <label class="f-label">Client Key</label>
-                    <input type="hidden" name="sslkey" :value="path" />
                     <label
                         class="flex items-center gap-2.5 px-3.5 py-2.5 bg-white border-[1.5px] border-dashed border-slate-200 rounded-xl hover:border-emerald-300 cursor-pointer transition-all group relative">
                         <span
@@ -371,7 +396,7 @@
                             style="font-size:15px;" x-text="name ? 'description' : 'upload_file'"></span>
                         <span class="text-[10px] font-bold truncate" :class="name ? 'text-slate-700' : 'text-slate-400'"
                             x-text="name || '.key / .pem'"></span>
-                        <input type="file" @change="handle($event)" accept=".key,.pem"
+                        <input type="file" name="sslkey" @change="handle($event)" accept=".key,.pem"
                             class="absolute inset-0 opacity-0 cursor-pointer w-full" :disabled="!on" />
                     </label>
                 </div>
@@ -392,24 +417,35 @@
         </a>
         <div class="flex items-center gap-2">
             <!-- Inline test -->
-            <button type="button"
-        @click="
-            const form = $el.closest('form');
-            const fd   = new FormData(form);
+            <div x-data="{ loading: false }">
+                <button type="button"
+                        :disabled="loading"
+                        @click="
+                            loading = true; // Start loading
+                            const form = $el.closest('form');
+                            const fd   = new FormData(form);
 
-            fetch('/test-connection', { method: 'POST', body: fd })
-                .then(r => r.json())
-                .then(data => {
-                    sporeToast(data.msg, data.status ? 'success' : 'error');
-                })
-                .catch(err => {
-                    sporeToast('Request failed: ' + err.message, 'error');
-                });
-        "
-        class="flex items-center gap-1.5 px-4 py-2 bg-white border border-slate-100 text-slate-600 rounded-xl font-bold text-xs hover:border-emerald-300 hover:text-emerald-600 transition-all">
-    <span class="material-symbols-outlined" style="font-size:14px;">wifi_tethering</span>
-    Test
-</button>
+                            fetch('/test-connection', { method: 'POST', body: fd })
+                                .then(r => r.json())
+                                .then(data => {
+                                    sporeToast(data.msg, data.status ? 'success' : 'error');
+                                })
+                                .catch(err => {
+                                    sporeToast('Request failed: ' + err.message, 'error');
+                                })
+                                .finally(() => {
+                                    loading = false; // Stop loading regardless of outcome
+                                });
+                        "
+                        class="flex items-center gap-1.5 px-4 py-2 bg-white border border-slate-100 text-slate-600 rounded-xl font-bold text-xs hover:border-emerald-300 hover:text-emerald-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                    
+                    <span x-show="!loading" class="material-symbols-outlined" style="font-size:14px;">wifi_tethering</span>
+                    
+                    <span x-show="loading" class="animate-spin material-symbols-outlined" style="font-size:14px;">refresh</span>
+                    
+                    <span x-text="loading ? 'Testing...' : 'Test'"></span>
+                </button>
+            </div>
 
             <!-- Submit -->
             <button type="submit"

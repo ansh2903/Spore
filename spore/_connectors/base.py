@@ -33,7 +33,7 @@ class SecurityConfig:
     @classmethod
     def from_dict(cls, d: dict, use_ssl: bool):
         if not use_ssl:
-            return cls(ssl_mode="prefer")
+            return cls(ssl_mode="disable")
         
         return cls(
             ssl_mode         = d.get("sslmode") or d.get("ssl_mode", "verify-full"),
@@ -74,11 +74,25 @@ class BaseSource(ABC):
     """
     kind: SourceKind
     capabilities: SourceCapabilities
+    connect_timeout: int = 5
 
     def __init__(self, config: dict, use_ssh: bool, use_ssl: bool):
         self.config = config
         self.security_config = SecurityConfig.from_dict(config, use_ssl)
         self.transport_config = TransportConfig.from_dict(config, use_ssh)
+
+    def _resolve_host_port(self) -> tuple[str, int | None]:
+        """Resolve host/port for connection, including Docker localhost remap."""
+        from spore._utils import is_running_in_docker
+
+        host = self.config.get("host", "127.0.0.1")
+        raw_port = self.config.get("port")
+        port = int(raw_port) if raw_port not in (None, "") else None
+
+        if is_running_in_docker() and host in ("Localhost", "localhost", "127.0.0.1"):
+            host = "host.docker.internal"
+
+        return host, port
 
     @contextmanager
     def connection_context(self) -> Generator[Any, None, None]:
@@ -87,8 +101,7 @@ class BaseSource(ABC):
         Handles the SSH Transport layer automatically if required by the source.
         Yields the driver-specific connection/client to be used in queries.
         """
-        host = self.config.get("host", "127.0.0.1")
-        port = int(self.config.get("port"))
+        host, port = self._resolve_host_port()
 
         tunnel = None
 
@@ -137,8 +150,8 @@ class BaseSource(ABC):
         """
         try:
             conn.close()
-        except Exception:
-            pass
+        except Exception as e:
+            logging.warning(f"Error closing connection: {e}")
 
     @abstractmethod
     def test_connection(self) -> tuple[bool, str]:

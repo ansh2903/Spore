@@ -102,7 +102,7 @@ sendMessageBtn.addEventListener('click', async () => {
         }
     }
 });
-
+ 
 // This function creates the modal, asks for inputs, and calculates chunks dynamically
 function triggerStreamConfig(base64Code, dbId, totalRows) {
     const modalId = `modal-${Date.now()}`;
