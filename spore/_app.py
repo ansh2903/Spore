@@ -60,11 +60,13 @@ def register_blueprints(app: Flask) -> None:
     from spore._routes.connections import connections_blueprint
     from spore._routes.workspace import workspace_blueprint
     from spore._routes.settings import settings_blueprint
+    from spore._routes.data import data_blueprint
 
     app.register_blueprint(interface_blueprint, name='interface')
     app.register_blueprint(connections_blueprint, name='connections')
     app.register_blueprint(workspace_blueprint, name='workspace')
     app.register_blueprint(settings_blueprint, name='settings')
+    app.register_blueprint(data_blueprint, name='data')
 
 def register_sockets(app: Flask) -> None:
     """Register Spore SocketIO (WebSockets) Events"""

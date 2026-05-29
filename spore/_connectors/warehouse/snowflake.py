@@ -11,6 +11,38 @@ from spore._config.settings import settings
 from spore._logger import logging
 
 
+def _load_snowflake_private_key(config: dict) -> bytes | None:
+    """Load a PEM private key file into DER bytes for snowflake-connector-python."""
+    key_path = config.get("private_key_file")
+    if not key_path or not os.path.isfile(key_path):
+        return None
+
+    try:
+        from cryptography.hazmat.backends import default_backend
+        from cryptography.hazmat.primitives import serialization
+    except ImportError as e:
+        raise RuntimeError(
+            "cryptography is required for Snowflake key-pair auth. pip install cryptography"
+        ) from e
+
+    with open(key_path, "rb") as fh:
+        key_data = fh.read()
+
+    passphrase = config.get("private_key_passphrase")
+    password = passphrase.encode() if passphrase else None
+
+    p_key = serialization.load_pem_private_key(
+        key_data,
+        password=password,
+        backend=default_backend(),
+    )
+    return p_key.private_bytes(
+        encoding=serialization.Encoding.DER,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption(),
+    )
+
+
 class SnowflakeSource(BaseSource):
     kind = SourceKind.WAREHOUSE
     capabilities = SourceCapabilities(
@@ -21,6 +53,24 @@ class SnowflakeSource(BaseSource):
         needs_credentials=True,
     )
 
+    def _connect_kwargs(self) -> dict:
+        c = self.config
+        kwargs = {
+            "account": c["account_identifier"],
+            "user": c["user"],
+            "warehouse": c.get("warehouse"),
+            "database": c.get("database"),
+            "schema": c.get("schema", "PUBLIC"),
+        }
+
+        private_key = _load_snowflake_private_key(c)
+        if private_key is not None:
+            kwargs["private_key"] = private_key
+        elif c.get("password"):
+            kwargs["password"] = c["password"]
+
+        return kwargs
+
     def _create_connection(self, host: str, port: int):
         try:
             import snowflake.connector
@@ -28,15 +78,7 @@ class SnowflakeSource(BaseSource):
             raise RuntimeError(
                 "snowflake-connector-python is required. pip install snowflake-connector-python"
             ) from e
-        c = self.config
-        return snowflake.connector.connect(
-            account=c["account_identifier"],
-            user=c["user"],
-            password=c["password"],
-            warehouse=c.get("warehouse"),
-            database=c.get("database"),
-            schema=c.get("schema", "PUBLIC"),
-        )
+        return snowflake.connector.connect(**self._connect_kwargs())
 
     def _close_connection(self, conn) -> None:
         try:

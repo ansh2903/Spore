@@ -19,7 +19,7 @@ IMPORTANT — ADBC bind parameter limitation:
 import os
 import urllib.parse
 import duckdb
-from typing import Any
+from typing import Any, Generator
 
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -29,6 +29,15 @@ import pandas as pd
 import adbc_driver_postgresql.dbapi as pg
 
 from ..base import BaseSource, SourceKind, SourceCapabilities
+from ..utils import (
+    QueryKind,
+    classify_query,
+    normalize_preview_limit,
+    status_row,
+    strip_query_terminator,
+    wrap_count_query,
+    wrap_preview_query,
+)
 from spore._logger import logging
 from spore._config.settings import settings
 
@@ -252,12 +261,28 @@ class PostgreSQLSource(BaseSource):
 
     # ── preview ───────────────────────────────────────────────────────────────
 
-    def preview(self, query: str, limit: int = 500):
+    def preview(self, query: str, limit: int = 100) -> Generator[dict, None, None]:
         """
         Yields three chunks: columns → metadata → rows.
-        Row count is capped at `limit` so materialising via
-        fetch_arrow_table() is acceptable here.
+
+        Result-set queries (SELECT / WITH / TABLE / VALUES / SHOW / EXPLAIN)
+        are wrapped in ``SELECT * FROM (...) LIMIT n`` so materialising via
+        fetch_arrow_table() is safe.
+
+        DML with RETURNING (``UPDATE … RETURNING``, ``INSERT … RETURNING`` …)
+        cannot be wrapped as a subquery, so it is executed directly and the
+        result is truncated client-side to ``limit`` rows.
+
+        Plain INSERT / UPDATE / DELETE / MERGE, DDL (CREATE / DROP / ALTER
+        / TRUNCATE / …) and utility statements (SET / VACUUM / …) have no
+        result set; they are executed, committed on a best-effort basis,
+        and surfaced as a single status row so the UI behaves identically
+        to a successful query.
         """
+        preview_limit = normalize_preview_limit(limit, default=100)
+        kind = classify_query(query)
+        body = strip_query_terminator(query)
+
         try:
             with self.connection_context() as conn:
                 cur    = conn.cursor()
@@ -265,18 +290,57 @@ class PostgreSQLSource(BaseSource):
                 if schema:
                     cur.execute(f"SET search_path TO {schema};")
 
+                if kind == QueryKind.SELECT:
+                    try:
+                        cur.execute(wrap_count_query(body))
+                        total_rows = cur.fetchone()[0]
+                    except Exception:
+                        total_rows = "unknown"
+
+                    cur.execute(wrap_preview_query(body, preview_limit, default_limit=100))
+                    arrow_table = cur.fetch_arrow_table()
+
+                    yield {"type": "columns",  "content": arrow_table.schema.names}
+                    yield {"type": "metadata", "total_rows": total_rows}
+                    yield {"type": "rows",     "content": arrow_table.to_pylist()}
+                    return
+
+                if kind == QueryKind.DML_RETURNING:
+                    cur.execute(body)
+                    arrow_table = cur.fetch_arrow_table()
+                    rows = arrow_table.to_pylist()
+                    returned = len(rows)
+
+                    yield {"type": "columns",  "content": arrow_table.schema.names}
+                    yield {
+                        "type": "metadata",
+                        "total_rows": returned
+                    }
+                    yield {"type": "rows", "content": rows}
+
+                    try:
+                        conn.commit()
+                    except Exception as commit_err:
+                        logging.warning(
+                            f"[postgresql] commit after DML RETURNING failed: {commit_err}"
+                        )
+                    return
+
+                # MUTATION / DDL / UTILITY — execute, commit, return a summary row.
+                cur.execute(body)
                 try:
-                    cur.execute(f"SELECT COUNT(*) FROM ({query.rstrip(';')}) AS _c")
-                    total_rows = cur.fetchone()[0]
-                except Exception:
-                    total_rows = "unknown"
+                    conn.commit()
+                except Exception as commit_err:
+                    logging.warning(
+                        f"[postgresql] commit after {kind.value} failed: {commit_err}"
+                    )
 
-                cur.execute(f"SELECT * FROM ({query.rstrip(';')}) AS _q LIMIT {int(limit)}")
-                arrow_table = cur.fetch_arrow_table()
+                affected = getattr(cur, "rowcount", None)
+                summary = status_row(body, kind, affected)
 
-                yield {"type": "columns",  "content": arrow_table.schema.names}
-                yield {"type": "metadata", "total_rows": total_rows, "preview_count": arrow_table.num_rows}
-                yield {"type": "rows",     "content": arrow_table.to_pylist()}
+                yield {"type": "columns",  "content": list(summary.keys())}
+                yield {"type": "metadata", "total_rows": 1}
+                yield {"type": "rows",     "content": [summary]}
 
         except Exception as e:
             logging.error(f"[postgresql] preview failed: {e}")
@@ -301,63 +365,48 @@ class PostgreSQLSource(BaseSource):
         yields one RecordBatch of N rows per iteration, bounding peak
         memory regardless of table size.
 
-        The SSH tunnel (if needed) is started here directly because we
-        need the host/port for DuckDB's ATTACH, not an ADBC connection.
-        Mirrors the logic in BaseSource.connection_context().
+        SSH tunnel is handled by BaseSource.tunnel_context() — DuckDB
+        needs the resolved host/port for ATTACH, not an ADBC connection.
         """
         dest = destination_path or settings.SPORE_DATA_DIR
-        stream_dir  = os.path.join(dest, "streams", stream_name)
+        stream_dir = os.path.join(dest, "streams", stream_name)
         os.makedirs(stream_dir, exist_ok=True)
         source_path = os.path.join(stream_dir, "source.parquet")
 
-        writer = duck = tunnel = None
+        writer = duck = None
+        c = self.config
 
         try:
-            transport = self.transport_config
-            c = self.config
-            host, port = self._resolve_host_port()
+            with self.tunnel_context() as (host, port):
+                pg_uri = self._postgres_uri(host, port)
 
-            if transport.use_ssh_tunnel:
-                from sshtunnel import SSHTunnelForwarder
-                tunnel = SSHTunnelForwarder(
-                    (transport.ssh_host, transport.ssh_port),
-                    ssh_username=transport.ssh_user,
-                    ssh_pkey=transport.ssh_private_key,
-                    remote_bind_address=(transport.remote_host, transport.remote_port),
-                )
-                tunnel.start()
-                host = "127.0.0.1"
-                port = tunnel.local_bind_port
+                duck = duckdb.connect(":memory:")
+                duck.execute(f"SET memory_limit = '{memory_ceiling if memory_ceiling else '1GB'}';")
+                duck.execute("INSTALL postgres; LOAD postgres;")
+                duck.execute(f"ATTACH '{pg_uri}' AS remote_db (TYPE POSTGRES);")
+                duck.execute("USE remote_db;")
 
-            pg_uri = self._postgres_uri(host, port)
+                schema = c.get("schema")
+                if schema:
+                    duck.execute(f"SET search_path = {_qi(schema)};")
 
-            duck = duckdb.connect(":memory:")
-            duck.execute(f"SET memory_limit = '{memory_ceiling}';")
-            duck.execute("INSTALL postgres; LOAD postgres;")
-            duck.execute(f"ATTACH '{pg_uri}' AS remote_db (TYPE POSTGRES);")
-            duck.execute("USE remote_db;")
+                reader = duck.sql(query).fetch_arrow_reader(batch_row_size)
+                total_rows = 0
 
-            schema = c.get("schema")
-            if schema:
-                duck.execute(f"SET search_path = {_qi(schema)};")
+                for batch in reader:
+                    if writer is None:
+                        writer = pq.ParquetWriter(source_path, batch.schema, compression="snappy")
+                    writer.write_batch(batch)
+                    total_rows += batch.num_rows
 
-            reader = duck.sql(query).fetch_arrow_reader(batch_row_size)
-            total_rows = 0
-
-            for batch in reader:
                 if writer is None:
-                    writer = pq.ParquetWriter(source_path, batch.schema, compression="snappy")
-                writer.write_batch(batch)
-                total_rows += batch.num_rows
-
-            if writer is None:
-                arrow_schema = duck.sql(query).arrow().schema
-                empty_arrays = [
-                    pa.array([], type=arrow_schema.field(i).type)
-                    for i in range(arrow_schema.num_fields)
-                ]
-                empty_table = pa.table(empty_arrays, names=arrow_schema.names)
-                pq.write_table(empty_table, source_path, compression="snappy")
+                    arrow_schema = duck.sql(query).arrow().schema
+                    empty_arrays = [
+                        pa.array([], type=arrow_schema.field(i).type)
+                        for i in range(arrow_schema.num_fields)
+                    ]
+                    empty_table = pa.table(empty_arrays, names=arrow_schema.names)
+                    pq.write_table(empty_table, source_path, compression="snappy")
 
             logging.info(f"[postgresql] ingested {total_rows} rows → {source_path}")
             return "success", stream_dir
@@ -367,9 +416,10 @@ class PostgreSQLSource(BaseSource):
             return "error", str(e)
 
         finally:
-            if writer: writer.close()
-            if duck:   duck.close()
-            if tunnel: tunnel.stop()
+            if writer:
+                writer.close()
+            if duck:
+                duck.close()
 
     # ── file_to_db ────────────────────────────────────────────────────────────
 

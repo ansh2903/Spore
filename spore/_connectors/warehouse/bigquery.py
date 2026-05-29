@@ -33,7 +33,12 @@ class BigQuerySource(BaseSource):
 
         c = self.config
         key_path = c.get("service_account_json")
-        if key_path and os.path.isfile(key_path):
+        if key_path:
+            if not os.path.isfile(key_path):
+                raise FileNotFoundError(
+                    f"Service account key not found at {key_path!r}. "
+                    "Re-create the connection and upload the JSON key again."
+                )
             creds = service_account.Credentials.from_service_account_file(key_path)
             return bigquery.Client(project=c["project_id"], credentials=creds)
 

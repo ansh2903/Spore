@@ -36,7 +36,7 @@ class SourceConnector:
         logging.info(f"[{self.source_type}] metadata → {ok}")
         return ok, meta
 
-    def preview(self, query: str, limit: int = 500):
+    def preview(self, query: str, limit: int = 100):
         if not self._connector.capabilities.can_preview:
             yield {
                 "type":    "error",

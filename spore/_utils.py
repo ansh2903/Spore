@@ -25,14 +25,18 @@ def _get_cipher():
     return Fernet(key.encode())
 
 def encrypt_creds(creds):
-    return _get_cipher().encrypt(str(creds).encode()).decode()
+    return _get_cipher().encrypt(json.dumps(creds).encode()).decode()
 
 def decrypt_creds(encrypted_creds):
     try:
         cipher = _get_cipher()
         decrypted_bytes = cipher.decrypt(encrypted_creds.encode())
         decrypted_str = decrypted_bytes.decode()
-        return ast.literal_eval(decrypted_str)
+        try:
+            return json.loads(decrypted_str)
+        except json.JSONDecodeError:
+            # Legacy sessions stored via str(dict) + ast.literal_eval
+            return ast.literal_eval(decrypted_str)
     except Exception as e:
         logging.error(f"Decryption failed specifically at: {repr(e)}")
         raise e

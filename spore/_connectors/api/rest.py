@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from ..base import BaseSource, SourceCapabilities, SourceKind
+from ..utils import requests_tls_kwargs
 from spore._logger import logging
 
 
@@ -34,10 +35,21 @@ class RestAPISource(BaseSource):
         try:
             import requests
 
+            tls = requests_tls_kwargs(self.config)
             # Prefer a quick HEAD, but some APIs block it; fall back to GET.
-            r = requests.head(endpoint, timeout=self.connect_timeout, allow_redirects=True)
+            r = requests.head(
+                endpoint,
+                timeout=self.connect_timeout,
+                allow_redirects=True,
+                **tls,
+            )
             if r.status_code >= 400:
-                r = requests.get(endpoint, timeout=self.connect_timeout, allow_redirects=True)
+                r = requests.get(
+                    endpoint,
+                    timeout=self.connect_timeout,
+                    allow_redirects=True,
+                    **tls,
+                )
             return True, f"Reachable ({r.status_code})"
         except Exception as e:
             logging.error(f"[rest_api] test_connection failed: {e}")

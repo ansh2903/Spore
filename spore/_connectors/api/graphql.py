@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from ..base import BaseSource, SourceCapabilities, SourceKind
+from ..utils import requests_tls_kwargs
 from spore._logger import logging
 
 
@@ -34,13 +35,14 @@ class GraphQLAPISource(BaseSource):
         try:
             import requests
 
-            # Minimal introspection probe (many servers allow it).
+            tls = requests_tls_kwargs(self.config)
             payload = {"query": "query { __typename }"}
             r = requests.post(
                 endpoint,
                 json=payload,
                 timeout=self.connect_timeout,
                 allow_redirects=True,
+                **tls,
             )
             if r.status_code >= 400:
                 return False, f"HTTP {r.status_code}"

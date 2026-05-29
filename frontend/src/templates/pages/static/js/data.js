@@ -5,6 +5,11 @@
  * Public API exposed on window (used by buttons in chat.html):
  *   - runDataPreview()         → streams query results into the overlay table
  *   - materializeDataQuery()   → pulls the query result to a local volume
+ *   - filterDataResults()      → client-side filter for the result table
+ *   - clearDataResultsSearch() → clears the row filter
+ *   - setDataPreviewTab(tab)   → switches between 'results' and 'history'
+ *   - restoreHistoryEntry(id)  → loads a past query back into the editor
+ *   - clearQueryHistory()      → wipes stored history (with confirm)
  */
 (() => {
     // Source-type → editor language. Anything not listed falls back to SQL.
@@ -20,22 +25,16 @@
 
     const DEFAULT_QUERIES = {
         sql:
-            '-- Select a connection on the left and write a query.\n' +
-            '-- Press Shift+Enter (or Ctrl/Cmd+Enter) to run a preview.\n' +
-            '\n' +
             'SELECT *\n' +
             'FROM information_schema.tables\n' +
             'LIMIT 100;\n',
         json:
-            '// NoSQL query — runs against the selected document store.\n' +
             '{\n' +
             '    "collection": "events",\n' +
             '    "filter": {},\n' +
             '    "limit": 100\n' +
             '}\n',
     };
-
-    const PREVIEW_LIMIT = 200;
 
     let editor = null;
     let currentLanguage = 'sql';
@@ -85,30 +84,138 @@
         const body = document.getElementById('data-result-tbody');
         if (head) head.innerHTML = '';
         if (body) body.innerHTML = '';
+        updateMatchCounter();
     }
 
     function renderColumns(cols) {
         const head = document.getElementById('data-result-head-row');
         if (!head) return;
         head.innerHTML = cols.map(c => `
-            <th class="px-3 py-2 font-black text-slate-500 uppercase tracking-widest text-[9px]">${escapeHtml(c)}</th>
+            <th class="px-3 py-2 text-left text-[9px] font-black tracking-wider text-slate-500 whitespace-nowrap">${escapeHtml(c)}</th>
         `).join('');
     }
 
     function appendRows(rows) {
         const body = document.getElementById('data-result-tbody');
         if (!body) return;
-        const html = rows.map(row => {
-            const cells = Object.values(row).map(v =>
-                `<td class="px-3 py-1.5">${
-                    v === null || v === undefined
-                        ? '<span class="text-slate-300 italic">null</span>'
-                        : escapeHtml(String(v))
-                }</td>`
-            ).join('');
-            return `<tr class="border-b border-slate-100 hover:bg-primary-soft/30">${cells}</tr>`;
+
+        const startIndex = body.querySelectorAll('tr').length;
+
+        const html = rows.map((row, i) => {
+            const rowIndex = startIndex + i;
+            const stripe = rowIndex % 2 === 0 ? 'bg-white' : 'bg-slate-50/50';
+            const cells = Object.values(row).map((v) => {
+                const cell = (v === null || v === undefined)
+                    ? '<span class="text-slate-300 italic">null</span>'
+                    : escapeHtml(String(v));
+                return `<td class="px-3 py-1.5 text-[11px] text-slate-700 font-medium whitespace-nowrap border-b border-slate-100">${cell}</td>`;
+            }).join('');
+            return `<tr class="${stripe} hover:bg-primary-soft/30 transition-colors">${cells}</tr>`;
         }).join('');
+
         body.insertAdjacentHTML('beforeend', html);
+        applyResultFilter();
+    }
+
+    function hasKnownTotal(dbTotalRows) {
+        return dbTotalRows !== null
+            && dbTotalRows !== undefined
+            && dbTotalRows !== 'unknown'
+            && !Number.isNaN(Number(dbTotalRows));
+    }
+
+    function formatStreamingMeta(limit, dbTotalRows) {
+        const showing = `Showing ${Number(limit).toLocaleString()}`;
+        if (!hasKnownTotal(dbTotalRows)) return showing;
+        return `Total: ${Number(dbTotalRows).toLocaleString()} · ${showing}`;
+    }
+
+    function formatFinalMeta(streamedRows, dbTotalRows, columnCount, elapsedMs) {
+        const parts = [];
+        if (hasKnownTotal(dbTotalRows)) {
+            parts.push(`Total: ${Number(dbTotalRows).toLocaleString()}`);
+        }
+        parts.push(`Showing ${Number(streamedRows).toLocaleString()}`);
+        parts.push(`${columnCount} cols`);
+        parts.push(`${elapsedMs.toLocaleString()} ms`);
+        return parts.join(' · ');
+    }
+
+    // ── Limit input ─────────────────────────────────────────────────────────
+
+    const LIMIT_MIN = 1;
+    const LIMIT_MAX = 100_000;
+
+    function readPreviewLimit() {
+        const input = document.getElementById('data-row-limit');
+        const raw = (input?.value ?? '').trim();
+        const parsed = parseInt(raw, 10);
+        if (!Number.isFinite(parsed)) return { ok: false, value: parsed, input };
+        if (parsed < LIMIT_MIN || parsed > LIMIT_MAX) return { ok: false, value: parsed, input };
+        return { ok: true, value: parsed, input };
+    }
+
+    // ── Result table client-side filter ─────────────────────────────────────
+
+    function getResultSearchTerm() {
+        const input = document.getElementById('data-result-search');
+        return (input?.value || '').trim().toLowerCase();
+    }
+
+    function applyResultFilter() {
+        const body = document.getElementById('data-result-tbody');
+        if (!body) return;
+
+        const term = getResultSearchTerm();
+        const rows = body.querySelectorAll('tr');
+
+        if (!term) {
+            rows.forEach((tr) => { tr.style.display = ''; });
+            updateMatchCounter(rows.length, rows.length);
+            return;
+        }
+
+        let matched = 0;
+        rows.forEach((tr) => {
+            const text = (tr.textContent || '').toLowerCase();
+            const hit = text.includes(term);
+            tr.style.display = hit ? '' : 'none';
+            if (hit) matched++;
+        });
+        updateMatchCounter(matched, rows.length);
+    }
+
+    function updateMatchCounter(matched, total) {
+        const el = document.getElementById('data-result-match');
+        if (!el) return;
+
+        const body = document.getElementById('data-result-tbody');
+        if (matched === undefined || total === undefined) {
+            const all = body ? body.querySelectorAll('tr').length : 0;
+            const visible = body ? body.querySelectorAll('tr:not([style*="display: none"])').length : 0;
+            matched = visible;
+            total = all;
+        }
+
+        if (total === 0) {
+            el.textContent = '— matches';
+            return;
+        }
+        if (matched === total) {
+            el.textContent = `${total.toLocaleString()} rows`;
+        } else {
+            el.textContent = `${matched.toLocaleString()} / ${total.toLocaleString()} match`;
+        }
+    }
+
+    function filterDataResults() {
+        applyResultFilter();
+    }
+
+    function clearDataResultsSearch() {
+        const input = document.getElementById('data-result-search');
+        if (input) input.value = '';
+        applyResultFilter();
     }
 
     function escapeHtml(s) {
@@ -118,6 +225,172 @@
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;');
+    }
+
+    // ── Query history ───────────────────────────────────────────────────────
+
+    const HISTORY_KEY = 'spore_data_history';
+    const HISTORY_LIMIT = 50;
+
+    function loadHistory() {
+        try {
+            const raw = localStorage.getItem(HISTORY_KEY);
+            const parsed = raw ? JSON.parse(raw) : [];
+            return Array.isArray(parsed) ? parsed : [];
+        } catch {
+            return [];
+        }
+    }
+
+    function saveHistory(list) {
+        try {
+            localStorage.setItem(HISTORY_KEY, JSON.stringify(list.slice(0, HISTORY_LIMIT)));
+        } catch {
+            // Storage quota or disabled — silently ignore; in-memory list still works.
+        }
+    }
+
+    function pushHistoryEntry(entry) {
+        const list = loadHistory();
+        list.unshift({
+            id: `q_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+            timestamp: Date.now(),
+            ...entry,
+        });
+        saveHistory(list);
+        renderQueryHistory();
+    }
+
+    function relativeTime(ts) {
+        const diff = Math.max(0, (Date.now() - ts) / 1000);
+        if (diff < 45) return 'just now';
+        if (diff < 3600) return `${Math.round(diff / 60)}m ago`;
+        if (diff < 86400) return `${Math.round(diff / 3600)}h ago`;
+        if (diff < 604800) return `${Math.round(diff / 86400)}d ago`;
+        return new Date(ts).toLocaleString();
+    }
+
+    function setHistoryCount(n) {
+        const el = document.getElementById('data-history-count');
+        if (!el) return;
+        el.textContent = String(n);
+        el.classList.toggle('bg-primary-soft', n > 0);
+        el.classList.toggle('text-primary-dark', n > 0);
+        el.classList.toggle('bg-slate-200', n === 0);
+        el.classList.toggle('text-slate-600', n === 0);
+    }
+
+    function renderQueryHistory() {
+        const list = document.getElementById('data-history-list');
+        const empty = document.getElementById('data-history-empty');
+        if (!list || !empty) return;
+
+        const history = loadHistory();
+        setHistoryCount(history.length);
+
+        if (history.length === 0) {
+            list.innerHTML = '';
+            empty.classList.remove('hidden');
+            empty.classList.add('flex');
+            return;
+        }
+        empty.classList.add('hidden');
+        empty.classList.remove('flex');
+
+        list.innerHTML = history.map((h) => {
+            const langLabel = h.language === 'json' ? 'NoSQL' : 'SQL';
+            const isOk = h.status === 'success';
+            const statusBadge = isOk
+                ? `<span class="inline-flex items-center gap-1 h-5 px-2 rounded-pill bg-primary-soft border border-primary/20 text-[8px] font-black uppercase tracking-widest text-primary-dark">
+                       <span class="w-1.5 h-1.5 rounded-pill bg-primary"></span>OK
+                   </span>`
+                : `<span class="inline-flex items-center gap-1 h-5 px-2 rounded-pill bg-rose-50 border border-rose-200 text-[8px] font-black uppercase tracking-widest text-rose-500">
+                       <span class="w-1.5 h-1.5 rounded-pill bg-rose-500"></span>Error
+                   </span>`;
+            const shown = Number(h.rowCount ?? 0).toLocaleString();
+            const rowsLabel = (h.totalRows !== null && h.totalRows !== undefined)
+                ? `${shown} / ${Number(h.totalRows).toLocaleString()} rows`
+                : `${shown} rows`;
+            const stats = isOk
+                ? `${rowsLabel} · ${h.colCount ?? 0} cols · ${(h.elapsedMs ?? 0).toLocaleString()} ms`
+                : (h.errorMessage || 'Query failed');
+
+            return `
+                <div class="group flex flex-col gap-1.5 px-3 py-3 hover:bg-slate-50/80 transition-colors cursor-pointer"
+                    onclick="restoreHistoryEntry('${h.id}')"
+                    title="Click to restore in the editor">
+                    <div class="flex items-center justify-between gap-2 min-w-0">
+                        <div class="flex items-center gap-2 min-w-0">
+                            ${statusBadge}
+                            <span class="inline-flex items-center h-5 px-2 rounded-pill bg-slate-50 border border-slate-200 text-[8px] font-black uppercase tracking-widest text-slate-500">
+                                ${langLabel}
+                            </span>
+                            <span class="text-[9px] font-mono text-slate-500 truncate">
+                                ${escapeHtml(h.connectionLabel || '—')}
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0">
+                            <span class="text-[9px] font-mono text-slate-400">${escapeHtml(relativeTime(h.timestamp))}</span>
+                            <button type="button"
+                                onclick="event.stopPropagation(); restoreHistoryEntry('${h.id}')"
+                                class="opacity-0 group-hover:opacity-100 inline-flex items-center gap-1 h-6 px-2 rounded-pill bg-white border border-slate-200 text-[9px] font-black uppercase tracking-widest text-slate-600 hover:text-primary hover:border-primary/40 transition-all">
+                                <span class="material-symbols-outlined text-[12px]">arrow_upward</span>
+                                Restore
+                            </button>
+                        </div>
+                    </div>
+                    <pre class="text-[10.5px] font-mono text-slate-700 whitespace-pre-wrap line-clamp-2 leading-snug m-0">${escapeHtml(h.query || '')}</pre>
+                    <span class="text-[9px] font-mono ${isOk ? 'text-slate-400' : 'text-rose-400'}">${escapeHtml(stats)}</span>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function restoreHistoryEntry(id) {
+        const entry = loadHistory().find((h) => h.id === id);
+        if (!entry || !editor) return;
+        editor.setValue(entry.query || '');
+        editor.focus();
+        setDataPreviewTab('results');
+        setStatus('Query restored', 'idle');
+    }
+
+    function clearQueryHistory() {
+        if (!window.confirm('Clear all saved query history?')) return;
+        try { localStorage.removeItem(HISTORY_KEY); } catch { /* noop */ }
+        renderQueryHistory();
+    }
+
+    function setDataPreviewTab(tab) {
+        const showResults = tab !== 'history';
+
+        const resultsPane = document.getElementById('data-results-pane');
+        const historyPane = document.getElementById('data-history-pane');
+        const resultsCtrl = document.getElementById('data-tab-controls-results');
+        const historyCtrl = document.getElementById('data-tab-controls-history');
+
+        if (resultsPane) resultsPane.classList.toggle('hidden', !showResults);
+        if (historyPane) historyPane.classList.toggle('hidden', showResults);
+        if (resultsCtrl) {
+            resultsCtrl.classList.toggle('hidden', !showResults);
+            resultsCtrl.classList.toggle('flex', showResults);
+        }
+        if (historyCtrl) {
+            historyCtrl.classList.toggle('hidden', showResults);
+            historyCtrl.classList.toggle('flex', !showResults);
+        }
+
+        document.querySelectorAll('.data-preview-tab').forEach((btn) => {
+            const isActive = btn.dataset.dataTab === (showResults ? 'results' : 'history');
+            btn.classList.toggle('bg-primary', isActive);
+            btn.classList.toggle('text-white', isActive);
+            btn.classList.toggle('shadow-tactile', isActive);
+            btn.classList.toggle('text-slate-500', !isActive);
+            btn.classList.toggle('hover:text-slate-900', !isActive);
+            btn.classList.toggle('hover:bg-white', !isActive);
+        });
+
+        if (!showResults) renderQueryHistory();
     }
 
     // ── Monaco setup ────────────────────────────────────────────────────────
@@ -228,34 +501,68 @@
 
     async function runDataPreview() {
         if (!editor) return;
+
         const conn = getActiveConnection();
         if (!conn) {
             setStatus('Pick a connection first', 'warn');
             return;
         }
+
         const query = (editor.getValue() || '').trim();
         if (!query) {
             setStatus('Editor is empty', 'warn');
             return;
         }
 
+        const { ok, value: limit, input: limitInput } = readPreviewLimit();
+        if (!ok) {
+            setStatus(`Limit must be a whole number between ${LIMIT_MIN} and ${LIMIT_MAX.toLocaleString()}`, 'warn');
+            limitInput?.focus();
+            limitInput?.select?.();
+            return;
+        }
+        // Snap the input back to the parsed value so the user sees what we sent.
+        if (limitInput) limitInput.value = String(limit);
+
         setStatus('Running…', 'running');
         clearResultTable();
         setResultMeta('— rows · — cols · — ms');
 
+        // Reset any active row filter so new rows aren't hidden by stale text.
+        const searchInput = document.getElementById('data-result-search');
+        if (searchInput) searchInput.value = '';
+        updateMatchCounter(0, 0);
+
         const formData = new FormData();
         formData.append('query', query);
         formData.append('id', conn.id);
+        formData.append('limit', String(limit));
 
-        let totalRows = 0;
+        let streamedRows = 0;
         let dbTotalRows = null;
         let columnCount = 0;
         const t0 = performance.now();
+
+        // Snapshot connection/language for the history entry — these can change
+        // mid-run if the user switches the dropdown.
+        const historyBase = {
+            query,
+            limit,
+            language: currentLanguage,
+            connectionId: conn.id,
+            connectionLabel: conn.display_name || conn.name || conn.alias || conn.id,
+        };
 
         try {
             const response = await fetch('/query-preview', { method: 'POST', body: formData });
             if (!response.ok || !response.body) {
                 setStatus(`HTTP ${response.status}`, 'error');
+                pushHistoryEntry({
+                    ...historyBase,
+                    status: 'error',
+                    errorMessage: `HTTP ${response.status}`,
+                    elapsedMs: Math.round(performance.now() - t0),
+                });
                 return;
             }
 
@@ -281,37 +588,54 @@
                     } else if (data.type === 'metadata') {
                         dbTotalRows = data.total_rows;
                     } else if (data.type === 'rows') {
-                        const prev = totalRows;
-                        totalRows += data.content.length;
-                        if (prev < PREVIEW_LIMIT) {
-                            appendRows(data.content.slice(0, PREVIEW_LIMIT - prev));
-                        }
+                        appendRows(data.content);
                     } else if (data.type === 'error') {
                         setStatus(`Error: ${data.content}`, 'error');
                         setResultMeta('Query failed');
+                        pushHistoryEntry({
+                            ...historyBase,
+                            status: 'error',
+                            errorMessage: String(data.content || 'Query failed'),
+                            elapsedMs: Math.round(performance.now() - t0),
+                        });
                         return;
                     }
                 }
             }
 
             const elapsed = Math.round(performance.now() - t0);
-            const rowsLabel = (dbTotalRows !== null && dbTotalRows !== 'unknown')
-                ? Number(dbTotalRows).toLocaleString()
-                : totalRows.toLocaleString();
-            setResultMeta(`${rowsLabel} rows · ${columnCount} cols · ${elapsed} ms`);
+            setResultMeta(formatFinalMeta(limit, dbTotalRows, columnCount, elapsed));
             setStatus('Done', 'idle');
+
+            pushHistoryEntry({
+                ...historyBase,
+                status: 'success',
+                rowCount: streamedRows,
+                totalRows: hasKnownTotal(dbTotalRows) ? Number(dbTotalRows) : null,
+                colCount: columnCount,
+                elapsedMs: elapsed,
+            });
         } catch (e) {
-            setStatus(`Failed: ${e.message || e}`, 'error');
+            const message = e?.message || String(e);
+            setStatus(`Failed: ${message}`, 'error');
+            pushHistoryEntry({
+                ...historyBase,
+                status: 'error',
+                errorMessage: message,
+                elapsedMs: Math.round(performance.now() - t0),
+            });
         }
     }
 
     async function materializeDataQuery() {
         if (!editor) return;
+
         const conn = getActiveConnection();
         if (!conn) {
             setStatus('Pick a connection first', 'warn');
             return;
         }
+        
         const query = (editor.getValue() || '').trim();
         if (!query) {
             setStatus('Editor is empty', 'warn');
@@ -348,6 +672,10 @@
     // ── boot ────────────────────────────────────────────────────────────────
 
     function boot() {
+        // Render the history badge + list immediately so the count reflects
+        // anything persisted from a previous session even before Monaco loads.
+        renderQueryHistory();
+
         if (!window.monacoReady) {
             // Loader script not present; nothing to do.
             return;
@@ -368,6 +696,11 @@
     // Expose the API for inline button onclick handlers in chat.html.
     window.runDataPreview = runDataPreview;
     window.materializeDataQuery = materializeDataQuery;
+    window.filterDataResults = filterDataResults;
+    window.clearDataResultsSearch = clearDataResultsSearch;
+    window.setDataPreviewTab = setDataPreviewTab;
+    window.restoreHistoryEntry = restoreHistoryEntry;
+    window.clearQueryHistory = clearQueryHistory;
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', boot);

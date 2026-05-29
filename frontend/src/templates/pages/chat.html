@@ -559,10 +559,11 @@
                                 <span class="material-symbols-outlined text-[16px]">link_off</span>
                             </button>
                         </div>
-                        <button type="button"
-                            class="inline-flex items-center gap-1.5 h-8 px-3 rounded-pill bg-white border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-primary hover:border-primary/40 transition-all">
-                            Sample <span class="font-mono">100</span>
-                        </button>
+                        <label class="inline-flex items-center h-7 rounded-pill border border-slate-200 bg-slate-50 pl-2.5 pr-2 gap-1.5">
+                            <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">Limit</span>
+                            <input id="data-row-limit" type="text" value="100"
+                                class="w-14 bg-transparent border-0 font-mono text-[11px] text-slate-800 focus:ring-0 focus:outline-none p-0" />
+                        </label>
                     </div>
                 </header>
 
@@ -575,7 +576,7 @@
 
                                 <!-- SQL/NoSQL editor: flexes the full height of the container -->
                                 <div id="data-tab-query" class="h-full flex flex-col">
-                                    <div class="flex items-center justify-between px-3 py-1.5 rounded-t-xl border border-b-0 border-slate-800 bg-slate-950 shrink-0">
+                                    <div class="flex items-center justify-between px-3 py-1.5 rounded-t-xl border border-b border-slate-700 bg-slate-950 shrink-0">
                                         <div class="flex items-center gap-2">
                                             <span class="inline-flex items-center gap-1.5 h-5 px-2 rounded-pill bg-slate-900 border border-slate-800 text-[9px] font-black uppercase tracking-widest text-slate-300">
                                                 <span class="w-1.5 h-1.5 rounded-pill bg-primary animate-pulse"></span>
@@ -584,12 +585,17 @@
                                             <span id="data-editor-status"
                                                 class="text-[9px] font-black uppercase tracking-widest text-slate-500 font-mono">Ready</span>
                                         </div>
-                                        <span class="hidden sm:inline-flex items-center gap-1 text-[9px] font-mono text-slate-500">
-                                            <kbd class="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-[9px] text-slate-400">⇧</kbd>
-                                            +
-                                            <kbd class="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-[9px] text-slate-400">⏎</kbd>
-                                            <span class="ml-1 text-slate-500">to run</span>
-                                        </span>
+                                        <div class="flex items-center gap-2">
+                                            <span class="hidden sm:inline-flex items-center gap-1 text-[9px] font-mono text-slate-500">
+                                                <kbd class="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-[9px] text-slate-400">Shift</kbd>
+                                                +
+                                                <kbd class="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-[9px] text-slate-400">Enter</kbd>
+                                                <span class="ml-1 text-slate-500">to run / or</span>
+                                            </span>
+                                            <button onclick="runDataPreview()" class="flex items-center gap-1 px-2 py-1 rounded bg-primary/20 hover:bg-primary/40 text-primary text-[9px] font-bold transition-all">
+                                                <span class="material-symbols-outlined text-[11px]">play_arrow</span>Execute
+                                            </button>
+                                        </div>
                                     </div>
                                     <div id="data-editor-mount"
                                         class="flex-1 min-h-0 rounded-b-xl overflow-hidden border border-t-0 border-slate-800 bg-slate-900">
@@ -609,26 +615,21 @@
 
                                     <!-- Action row (moved here from the bottom bar) -->
                                     <div class="flex items-center justify-between gap-3 px-3 pt-3 pb-2 border-b border-slate-100 shrink-0 flex-wrap">
-                                        <div class="flex items-center gap-2 flex-wrap">
-                                            <span class="inline-flex items-center h-7 px-2.5 rounded-pill bg-slate-900 text-white text-[9px] font-black uppercase tracking-widest">
-                                                Materialize
+                                        <div class="flex items-center justify-between px-3 py-1.5 shrink-0">
+                                            <span id="data-result-meta"
+                                                class="inline-flex items-center h-5 px-2 rounded-pill bg-slate-50 border border-slate-200 text-[9px] font-black uppercase tracking-widest text-slate-500 font-mono">
+                                                — rows · — cols · — ms
                                             </span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                        <div class="flex items-center gap-2 flex-wrap">
                                             <label class="inline-flex items-center h-7 rounded-pill border border-slate-200 bg-slate-50 pl-2.5 pr-2 gap-1.5">
-                                                <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">Stream</span>
-                                                <input id="data-stream-name" type="text" value="stream_query_1"
+                                                <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">Local Name</span>
+                                                <input id="data-stream-name" type="text" value="data_1"
                                                     class="w-32 bg-transparent border-0 font-mono text-[11px] text-slate-800 focus:ring-0 focus:outline-none p-0" />
-                                            </label>
-                                            <label class="inline-flex items-center h-7 rounded-pill border border-slate-200 bg-slate-50 pl-2.5 pr-2 gap-1.5">
-                                                <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">Limit</span>
-                                                <input id="data-row-limit" type="text" value="1000"
-                                                    class="w-14 bg-transparent border-0 font-mono text-[11px] text-slate-800 focus:ring-0 focus:outline-none p-0" />
                                             </label>
                                         </div>
                                         <div class="flex items-center gap-2">
-                                            <button type="button" onclick="runDataPreview()"
-                                                class="inline-flex items-center gap-1.5 h-7 px-3 rounded-pill bg-white border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-primary hover:border-primary/40 transition-all">
-                                                Preview
-                                            </button>
                                             <button type="button" onclick="materializeDataQuery()"
                                                 class="inline-flex items-center gap-1.5 h-7 px-3 rounded-pill bg-primary text-white text-[10px] font-black uppercase tracking-widest shadow-tactile hover:translate-y-[-1px] transition-all">
                                                 <span class="material-symbols-outlined text-[14px]">download</span>
@@ -636,27 +637,88 @@
                                             </button>
                                         </div>
                                     </div>
-
-                                    <!-- Result meta strip -->
-                                    <div class="flex items-center justify-between px-3 py-1.5 shrink-0">
-                                        <span id="data-result-meta"
-                                            class="inline-flex items-center h-5 px-2 rounded-pill bg-slate-50 border border-slate-200 text-[9px] font-black uppercase tracking-widest text-slate-500 font-mono">
-                                            — rows · — cols · — ms
-                                        </span>
                                     </div>
 
-                                    <!-- Result table -->
-                                    <div class="flex-1 min-h-0 overflow-auto border-t border-slate-100 bg-white scrollbar-thin mx-3 mb-3 rounded-b-lg">
+                                    <!-- Tab strip + tab-specific controls -->
+                                    <div class="flex items-center justify-between gap-2 px-3 py-2 border-t border-slate-100 shrink-0">
+                                        <div class="inline-flex items-center h-7 rounded-pill bg-slate-50 border border-slate-200 p-0.5 gap-0.5 shadow-inner shrink-0">
+                                            <button type="button" data-data-tab="results"
+                                                onclick="setDataPreviewTab('results')"
+                                                class="data-preview-tab inline-flex items-center h-full px-3 rounded-pill bg-primary text-white text-[9px] font-black uppercase tracking-widest shadow-tactile">
+                                                <span class="material-symbols-outlined text-[12px] mr-1">table_rows</span>
+                                                Results
+                                            </button>
+                                            <button type="button" data-data-tab="history"
+                                                onclick="setDataPreviewTab('history')"
+                                                class="data-preview-tab inline-flex items-center h-full px-3 rounded-pill text-slate-500 hover:text-slate-900 hover:bg-white transition-colors text-[9px] font-black uppercase tracking-widest">
+                                                <span class="material-symbols-outlined text-[12px] mr-1">history</span>
+                                                History
+                                                <span id="data-history-count"
+                                                    class="ml-1.5 inline-flex items-center justify-center min-w-[16px] h-4 px-1 rounded-pill bg-slate-200 text-slate-600 text-[8px] font-black">
+                                                    0
+                                                </span>
+                                            </button>
+                                        </div>
+
+                                        <!-- Results tab controls: search + match counter -->
+                                        <div id="data-tab-controls-results"
+                                            class="flex items-center gap-2 flex-1 justify-end min-w-0">
+                                            <label class="inline-flex items-center h-7 rounded-pill border border-slate-200 bg-slate-50 px-2.5 gap-1.5 w-full max-w-xs">
+                                                <span class="material-symbols-outlined text-[14px] text-slate-400">search</span>
+                                                <input id="data-result-search" type="text" placeholder="Filter rows…"
+                                                    oninput="filterDataResults(this.value)"
+                                                    class="flex-1 bg-transparent border-0 font-mono text-[11px] text-slate-700 placeholder:text-slate-400 focus:ring-0 focus:outline-none p-0" />
+                                                <button type="button" onclick="clearDataResultsSearch()"
+                                                    class="text-slate-300 hover:text-slate-600 transition-colors"
+                                                    title="Clear filter">
+                                                    <span class="material-symbols-outlined text-[14px]">close</span>
+                                                </button>
+                                            </label>
+                                            <span id="data-result-match"
+                                                class="text-[9px] font-black uppercase tracking-widest text-slate-400 font-mono whitespace-nowrap">
+                                                — matches
+                                            </span>
+                                        </div>
+
+                                        <!-- History tab controls: clear button -->
+                                        <div id="data-tab-controls-history" class="hidden items-center gap-2">
+                                            <button type="button" onclick="clearQueryHistory()"
+                                                class="inline-flex items-center gap-1.5 h-7 px-3 rounded-pill bg-white border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-rose-500 hover:border-rose-300 transition-all">
+                                                <span class="material-symbols-outlined text-[14px]">delete_sweep</span>
+                                                Clear
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Results pane -->
+                                    <div id="data-results-pane"
+                                        class="flex-1 min-h-0 overflow-auto border border-slate-200 bg-white scrollbar-thin mx-3 mb-3 rounded-xl">
                                         <table class="w-full text-left text-[11px] font-mono">
                                             <thead class="sticky top-0 bg-slate-50 border-b border-slate-200">
                                                 <tr id="data-result-head-row">
-                                                    <th class="px-3 py-2 font-black text-slate-300 uppercase tracking-widest text-[9px] italic">
+                                                    <th class="px-3 py-2 text-left text-[9px] font-black tracking-wider text-slate-500 whitespace-nowrap">
                                                         Run a query to see columns
                                                     </th>
                                                 </tr>
                                             </thead>
                                             <tbody id="data-result-tbody" class="text-slate-700"></tbody>
                                         </table>
+                                    </div>
+
+                                    <!-- History pane -->
+                                    <div id="data-history-pane"
+                                        class="hidden flex-1 min-h-0 overflow-auto border-t border-slate-100 bg-white scrollbar-thin mx-3 mb-3 rounded-b-lg">
+                                        <div id="data-history-list" class="divide-y divide-slate-100"></div>
+                                        <div id="data-history-empty"
+                                            class="flex flex-col items-center justify-center py-16 px-6 text-center gap-2">
+                                            <span class="material-symbols-outlined text-[28px] text-slate-300">history</span>
+                                            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 font-mono">
+                                                No history yet
+                                            </p>
+                                            <p class="text-[10px] font-mono text-slate-400">
+                                                Run a query to start tracking it here.
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

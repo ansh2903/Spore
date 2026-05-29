@@ -235,7 +235,7 @@
 
     <!-- ── Transport layer: SSH Tunnel ─────────────────────────── -->
     {% if config.features.supports_ssh %}
-    <div x-data="{ on: false }">
+    <div x-data="{ on: false, sshAuth: 'key' }">
         <input type="hidden" name="use_ssh" :value="on">
 
         <div class="flex items-center gap-2 mb-3">
@@ -268,24 +268,41 @@
             class="mt-2.5 pl-3 border-l-2 border-emerald-100 space-y-2.5">
 
             <div class="grid grid-cols-3 gap-2.5">
-                {% for f_id, f in common_layers.ssh_tunnel.fields.items() %}
-                {% if f_id in ['ssh_host', 'ssh_port'] %}
-                <div class="{{ 'col-span-2' if f_id == 'ssh_host' else '' }}">
-                    <label class="f-label">{{ f.label }}</label>
-                    <input type="{{ f.type }}" name="{{ f_id }}" class="f-input" value="{{ f.default | default('') }}"
-                        placeholder="{{ f.placeholder | default('') }}" :required="on" :disabled="!on" />
+                <div class="col-span-2">
+                    <label class="f-label">{{ common_layers.ssh_tunnel.fields.ssh_host.label }}</label>
+                    <input type="text" name="ssh_host" class="f-input"
+                        placeholder="{{ common_layers.ssh_tunnel.fields.ssh_host.placeholder | default('') }}"
+                        :required="on" :disabled="!on" />
                 </div>
-                {% endif %}
-                {% endfor %}
+                <div>
+                    <label class="f-label">{{ common_layers.ssh_tunnel.fields.ssh_port.label }}</label>
+                    <input type="number" name="ssh_port" class="f-input"
+                        value="{{ common_layers.ssh_tunnel.fields.ssh_port.default | default(22) }}"
+                        :required="on" :disabled="!on" />
+                </div>
             </div>
 
-            {% for f_id, f in common_layers.ssh_tunnel.fields.items() %}
-            {% if f_id not in ['ssh_host', 'ssh_port'] %}
             <div>
-                <label class="f-label">{{ f.label }}</label>
+                <label class="f-label">{{ common_layers.ssh_tunnel.fields.ssh_user.label }}</label>
+                <input type="text" name="ssh_user" class="f-input"
+                    placeholder="{{ common_layers.ssh_tunnel.fields.ssh_user.placeholder | default('') }}"
+                    :required="on" :disabled="!on" />
+            </div>
 
-                {% if f.type == 'file' %}
+            <div>
+                <label class="f-label">{{ common_layers.ssh_tunnel.fields.ssh_auth.label }}</label>
+                <select name="ssh_auth" x-model="sshAuth" :disabled="!on" class="f-input"
+                    style="font-family:'Plus Jakarta Sans',sans-serif;">
+                    {% for opt in common_layers.ssh_tunnel.fields.ssh_auth.options %}
+                    <option value="{{ opt }}">{{ opt | capitalize }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Key auth -->
+            <div x-show="sshAuth === 'key'" class="space-y-2.5">
                 <div x-data="fileField()" class="relative">
+                    <label class="f-label">{{ common_layers.ssh_tunnel.fields.ssh_private_key.label }}</label>
                     <label
                         class="flex items-center gap-3 px-3.5 py-2.5 bg-white border-[1.5px] border-dashed border-slate-200 rounded-xl hover:border-emerald-300 cursor-pointer transition-all group">
                         <span class="material-symbols-outlined shrink-0 transition-colors" style="font-size:16px;"
@@ -297,18 +314,32 @@
                             class="ml-auto shrink-0 text-slate-300 hover:text-red-400 transition-colors">
                             <span class="material-symbols-outlined" style="font-size:14px;">close</span>
                         </button>
-                        <input type="file" name="{{ f_id }}" @change="handle($event)" accept=".pem,.key"
-                            class="absolute inset-0 opacity-0 cursor-pointer w-full" :disabled="!on" />
+                        <input type="file" name="ssh_private_key" @change="handle($event)" accept=".pem,.key"
+                            class="absolute inset-0 opacity-0 cursor-pointer w-full"
+                            :required="on && sshAuth === 'key'" :disabled="!on" />
                     </label>
                 </div>
-                {% else %}
-                <input type="{{ f.type }}" name="{{ f_id }}" class="f-input"
-                    placeholder="{{ f.placeholder | default('') }}"
-                    :required="on && {{ 'true' if f.required else 'false' }}" :disabled="!on" />
-                {% endif %}
+                <div x-data="{ show: false }" class="relative">
+                    <label class="f-label">{{ common_layers.ssh_tunnel.fields.ssh_key_passphrase.label }}</label>
+                    <input :type="show ? 'text' : 'password'" name="ssh_key_passphrase" class="f-input pr-10"
+                        placeholder="Optional" :disabled="!on" />
+                    <button type="button" @click="show = !show"
+                        class="absolute right-3 top-[calc(50%+10px)] -translate-y-1/2 text-slate-400 hover:text-primary transition-colors">
+                        <span class="material-symbols-outlined" style="font-size:15px;" x-text="show ? 'visibility_off' : 'visibility'"></span>
+                    </button>
+                </div>
             </div>
-            {% endif %}
-            {% endfor %}
+
+            <!-- Password auth -->
+            <div x-show="sshAuth === 'password'" x-data="{ show: false }" class="relative">
+                <label class="f-label">{{ common_layers.ssh_tunnel.fields.ssh_password.label }}</label>
+                <input :type="show ? 'text' : 'password'" name="ssh_password" class="f-input pr-10"
+                    placeholder="••••••••" :required="on && sshAuth === 'password'" :disabled="!on" />
+                <button type="button" @click="show = !show"
+                    class="absolute right-3 top-[calc(50%+10px)] -translate-y-1/2 text-slate-400 hover:text-primary transition-colors">
+                    <span class="material-symbols-outlined" style="font-size:15px;" x-text="show ? 'visibility_off' : 'visibility'"></span>
+                </button>
+            </div>
 
         </div>
     </div>
@@ -316,6 +347,7 @@
 
     <!-- ── Security layer: SSL / TLS ───────────────────────────── -->
     {% if config.features.supports_ssl %}
+    {% set ssl_layer = config.ssl_profile if ('ssl_profile' in config) else common_layers.ssl_tls %}
     <div x-data="{ on: false, mode: 'prefer' }">
         <input type="hidden" name="use_ssl" :value="on">
 
@@ -326,8 +358,8 @@
                 <span class="material-symbols-outlined" style="font-size:17px;"
                     :class="on ? 'text-emerald-600' : 'text-slate-400'">lock</span>
                 <div>
-                    <p class="text-xs font-black text-slate-700">{{ common_layers.ssl_tls.label }}</p>
-                    <p class="text-[9px] text-slate-400 font-medium">{{ common_layers.ssl_tls.description }}</p>
+                    <p class="text-xs font-black text-slate-700">{{ ssl_layer.label | default(common_layers.ssl_tls.label) }}</p>
+                    <p class="text-[9px] text-slate-400 font-medium">{{ ssl_layer.description | default(common_layers.ssl_tls.description) }}</p>
                 </div>
             </div>
             <div class="relative w-[34px] h-[20px] rounded-full transition-colors duration-200 shrink-0"
@@ -342,7 +374,63 @@
             x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0"
             class="mt-2.5 pl-3 border-l-2 border-emerald-100 space-y-2.5">
 
-            <!-- SSL Mode select always first -->
+            {% if 'ssl_profile' in config %}
+            {# Vendor-specific SSL profile (REST, Snowflake, …) #}
+            {% for f_id, f in ssl_layer.fields.items() %}
+            <div>
+                <label class="f-label">
+                    {{ f.label }}
+                    {% if f.required %}<span class="text-primary">*</span>{% endif %}
+                </label>
+
+                {% if f.type == 'file' %}
+                <div x-data="fileField()" class="relative">
+                    <label
+                        class="flex items-center gap-3 px-3.5 py-2.5 bg-white border-[1.5px] border-dashed border-slate-200 rounded-xl hover:border-emerald-300 cursor-pointer transition-all group">
+                        <span class="material-symbols-outlined shrink-0 transition-colors" style="font-size:16px;"
+                            :class="name ? 'text-emerald-500' : 'text-slate-300 group-hover:text-emerald-400'"
+                            x-text="name ? 'description' : 'upload_file'"></span>
+                        <span class="text-[11px] font-bold truncate" :class="name ? 'text-slate-700' : 'text-slate-400'"
+                            x-text="name || '{{ f.placeholder | default('Choose file') }}'"></span>
+                        <button type="button" x-show="name" @click.stop="clear()"
+                            class="ml-auto shrink-0 text-slate-300 hover:text-red-400 transition-colors">
+                            <span class="material-symbols-outlined" style="font-size:14px;">close</span>
+                        </button>
+                        <input type="file" name="{{ f_id }}" @change="handle($event)"
+                            class="absolute inset-0 opacity-0 cursor-pointer w-full" :disabled="!on"
+                            {% if f.required %}:required="on"{% endif %} />
+                    </label>
+                </div>
+
+                {% elif f.type == 'select' %}
+                <select name="{{ f_id }}" class="f-input" :disabled="!on"
+                    style="font-family:'Plus Jakarta Sans',sans-serif;">
+                    {% for opt in f.options %}
+                    <option value="{{ opt }}" {% if f.default == opt %}selected{% endif %}>{{ opt }}</option>
+                    {% endfor %}
+                </select>
+
+                {% elif f.type == 'password' %}
+                <div x-data="{ show: false }" class="relative">
+                    <input :type="show ? 'text' : 'password'" name="{{ f_id }}" class="f-input pr-10"
+                        placeholder="{{ f.placeholder | default('') }}" :disabled="!on"
+                        {% if f.required %}:required="on"{% endif %} />
+                    <button type="button" @click="show = !show"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors">
+                        <span class="material-symbols-outlined" style="font-size:15px;" x-text="show ? 'visibility_off' : 'visibility'"></span>
+                    </button>
+                </div>
+
+                {% else %}
+                <input type="{{ f.type }}" name="{{ f_id }}" class="f-input"
+                    value="{{ f.default | default('') }}" placeholder="{{ f.placeholder | default('') }}"
+                    :disabled="!on" {% if f.required %}:required="on"{% endif %} />
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            {% else %}
+            {# Default PostgreSQL-style SSL / mTLS #}
             <div>
                 <label class="f-label">SSL Mode</label>
                 <select name="sslmode" x-model="mode" :disabled="!on" class="f-input"
@@ -353,7 +441,6 @@
                 </select>
             </div>
 
-            <!-- CA cert: verify-ca and verify-full -->
             <div x-show="mode === 'verify-ca' || mode === 'verify-full'" x-data="fileField()">
                 <label class="f-label">CA Certificate</label>
                 <label
@@ -372,7 +459,6 @@
                 </label>
             </div>
 
-            <!-- Client cert + key: verify-full only -->
             <div x-show="mode === 'verify-full'" class="grid grid-cols-2 gap-2.5">
                 <div x-data="fileField()">
                     <label class="f-label">Client Certificate</label>
@@ -401,6 +487,7 @@
                     </label>
                 </div>
             </div>
+            {% endif %}
 
         </div>
     </div>

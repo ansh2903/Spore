@@ -9,19 +9,24 @@ class Settings:
     SECRET_KEY = os.getenv("SECRET_KEY", "scalable_secret_key")
     SQLALCHEMY_URI = os.getenv("SQLALCHEMY_URI")
     DEBUG = os.getenv("DEBUG", "True") == "True"
+
     OLLAMA_ENDPOINT = os.getenv("OLLAMA_ENDPOINT", "http://localhost:11434")
     LMSTUDIO_ENDPOINT = os.getenv("LMSTUDIO_ENDPOINT", "http://localhost:1234")
     DEFAULT_MODEL = os.getenv("OLLAMA_LLM")
+    
     APP_HOST = os.getenv("APP_HOST", "127.0.0.1")
     APP_PORT = int(os.getenv("APP_PORT", 5000))
+    
     REDIS_HOST = os.getenv("REDIS_HOST", "127.0.0.1")
     REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
     REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", None)
-    # Host path where materialized Parquet lands (Flask / ingest)
-    SPORE_DATA_DIR = os.getenv("SPORE_DATA_DIR", os.path.join(os.getcwd(), "data"))
+    
+    # Host path where materialized data lands (Flask / ingest)
+    SPORE_DATA_DIR = os.getenv("SPORE_DATA_DIR", os.path.join(os.getcwd(), "volumes"))
+    
     # Path visible inside the sandboxed Jupyter kernel container
     KERNEL_DATA_MOUNT = os.getenv("KERNEL_DATA_MOUNT", "/data")
-    
+
 settings = Settings()
 
 raw_origins = os.getenv("ALLOWED_ORIGINS", "http://127.0.0.1:5000,http://localhost:5000")
@@ -38,7 +43,16 @@ COMMON_LAYERS = {
             "ssh_host": {"label": "SSH Host", "type": "text", "placeholder": "bastion.example.com", "required": True},
             "ssh_port": {"label": "SSH Port", "type": "number", "default": 22, "required": True},
             "ssh_user": {"label": "SSH User", "type": "text", "placeholder": "ubuntu", "required": True},
-            "ssh_private_key": {"label": "Private Key", "type": "file", "required": True} # Changed to file
+            "ssh_auth": {
+                "label": "Auth Method",
+                "type": "select",
+                "options": ["key", "password"],
+                "default": "key",
+                "required": True,
+            },
+            "ssh_private_key": {"label": "Private Key", "type": "file", "required": False},
+            "ssh_key_passphrase": {"label": "Key Passphrase", "type": "password", "required": False},
+            "ssh_password": {"label": "SSH Password", "type": "password", "required": False},
         }
     },
     "ssl_tls": {
@@ -47,10 +61,36 @@ COMMON_LAYERS = {
         "description": "Require encrypted transport or Mutual TLS (mTLS) via certificates.",
         "fields": {
             "sslmode": {"label": "SSL Mode", "type": "select", "options": ["disable", "allow", "prefer", "require", "verify-ca", "verify-full"], "default": "prefer", "required": True},
-            "sslrootcert": {"label": "CA Root Certificate", "type": "file", "required": False}, # Changed to file
-            "sslcert": {"label": "Client Certificate (mTLS)", "type": "file", "required": False}, # Changed to file
-            "sslkey": {"label": "Client Private Key", "type": "file", "required": False} # Changed to file
+            "sslrootcert": {"label": "CA Root Certificate", "type": "file", "required": False},
+            "sslcert": {"label": "Client Certificate (mTLS)", "type": "file", "required": False},
+            "sslkey": {"label": "Client Private Key", "type": "file", "required": False}
         }
+    }
+}
+
+REST_SSL_PROFILE = {
+    "label": "TLS / Client Certificates",
+    "description": "Verify server certificates and optionally present a client cert.",
+    "fields": {
+        "verify_ssl": {
+            "label": "Verify Server Certificate",
+            "type": "select",
+            "options": ["true", "false"],
+            "default": "true",
+            "required": False,
+        },
+        "ca_bundle": {"label": "CA Bundle", "type": "file", "required": False},
+        "client_cert": {"label": "Client Certificate", "type": "file", "required": False},
+        "client_key": {"label": "Client Private Key", "type": "file", "required": False},
+    }
+}
+
+SNOWFLAKE_SSL_PROFILE = {
+    "label": "Key-Pair Authentication",
+    "description": "Use a private key file instead of (or with) password auth.",
+    "fields": {
+        "private_key_file": {"label": "Private Key File", "type": "file", "required": False},
+        "private_key_passphrase": {"label": "Key Passphrase", "type": "password", "required": False},
     }
 }
 
@@ -88,7 +128,7 @@ VENDOR_CONFIG = [
                 "dataset_id": {"label": "Dataset ID", "type": "text", "required": True},
                 "service_account_json": {"label": "Service Account JSON Key", "type": "file", "required": True}
             },
-            "features": {"supports_ssh": False, "supports_ssl": True}
+            "features": {"supports_ssh": False, "supports_ssl": False}
         },
         "snowflake": {
             "metadata": {
@@ -102,8 +142,9 @@ VENDOR_CONFIG = [
                 "warehouse": {"label": "Warehouse", "type": "text", "required": True},
                 "database": {"label": "Database", "type": "text", "required": True},
                 "user": {"label": "Username", "type": "text", "required": True},
-                "password": {"label": "Password", "type": "password", "required": True}
+                "password": {"label": "Password", "type": "password", "required": False},
             },
+            "ssl_profile": SNOWFLAKE_SSL_PROFILE,
             "features": {"supports_ssh": False, "supports_ssl": True}
         }
     }),
@@ -120,6 +161,7 @@ VENDOR_CONFIG = [
                 "auth_type": {"label": "Authentication Type", "type": "select", "options": ["None", "API Key", "Bearer Token", "Basic Auth"], "default": "None", "required": True},
                 "auth_details": {"label": "Authentication Details", "type": "json", "placeholder": '{"api_key": "your_api_key_here"}', "required": False}
             },
+            "ssl_profile": REST_SSL_PROFILE,
             "features": {"supports_ssh": False, "supports_ssl": True}
         },
         "graphql_api": {
@@ -134,6 +176,7 @@ VENDOR_CONFIG = [
                 "auth_type": {"label": "Authentication Type", "type": "select", "options": ["None", "API Key", "Bearer Token", "Basic Auth"], "default": "None", "required": True},
                 "auth_details": {"label": "Authentication Details", "type": "json", "placeholder": '{"api_key": "your_api_key_here"}', "required": False}
             },
+            "ssl_profile": REST_SSL_PROFILE,
             "features": {"supports_ssh": False, "supports_ssl": True}
         }
     }),
