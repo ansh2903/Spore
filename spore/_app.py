@@ -1,26 +1,26 @@
 from flask import Flask
 from flask_session import Session
 from flask_socketio import SocketIO
+from flask_sqlalchemy import SQLAlchemy
 
 from spore._kernel.socket_events import register_kernel_events
 from spore._config.settings import settings
-from spore._config.settings import ALLOWED_ORIGINS
+from spore._utils import prepare_data_volume_for_kernel
 
 from spore._exception import CustomException
 from spore._logger import logging
 
-import redis
 import sys
 import os
 
-socketio = SocketIO(cors_allowed_origins=ALLOWED_ORIGINS, async_mode='threading')
+socketio = SocketIO(cors_allowed_origins=settings.ALLOWED_ORIGINS, async_mode='threading')
 
 def create_app() -> Flask:
     """Creates Spore lol"""
     try:
         logging.info("Initializing Spore")
         static_path = os.path.join(os.path.dirname(__file__), '..', 'frontend', 'src', 'templates', 'pages', 'static')
-        
+
         app = Flask(__name__, 
                     static_folder=static_path, 
                     static_url_path='/static')
@@ -30,6 +30,12 @@ def create_app() -> Flask:
         register_blueprints(app)
         register_sockets(app)
 
+        try:
+            logging.info(settings.SPORE_DATA_DIR)
+            prepare_data_volume_for_kernel(settings.SPORE_DATA_DIR)
+        except OSError as exc:
+            logging.warning("Data volume prep failed at startup: %s", exc)
+
         return app
 
     except Exception as e:
@@ -38,23 +44,21 @@ def create_app() -> Flask:
 
 def configure_extensions(app: Flask) -> None:
     try:
-        """Handle Redis, Sessions and other extensions."""
-        from spore._utils import data_runtime
+        logging.info(f"Session DB Path: {settings.SESSION_SQLITE_PATH}")
 
-        app.config["SESSION_TYPE"] = "redis"
-        app.config["SESSION_PERMANENT"] = True
-        # Session lifetime is configurable from the Data & Cache lab. When the
-        # user sets it to "completely permanent" we fall back to a ~10 year TTL
-        # (Redis cannot store a never-expiring session via flask-session).
-        app.config['PERMANENT_SESSION_LIFETIME'] = data_runtime()["session_lifetime_seconds"]
-        app.config["SESSION_USE_SIGNER"] = True
-        app.config["SESSION_KEY_PREFIX"] = "spore_session:"
-        app.config["SESSION_REDIS"] = redis.StrictRedis(
-            host=settings.REDIS_HOST,
-            port=settings.REDIS_PORT,
-            password=settings.REDIS_PASSWORD
-        )
+        app.config["SQLALCHEMY_DATABASE_URI"] = settings.SESSION_SQLITE_PATH
+        app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+        app.config['SESSION_TYPE'] = 'sqlalchemy'
+
+        db = SQLAlchemy(app)
+
+        app.config['SESSION_SQLALCHEMY'] = db
+        app.config['SESSION_SQLALCHEMY_TABLE'] = 'sessions'
+
         Session(app)
+
+        with app.app_context():
+            db.create_all()
     except Exception as e:
         logging.info(f"failed to establish external connections.")
         raise CustomException(e)
@@ -89,10 +93,10 @@ def register_sockets(app: Flask) -> None:
     register_socketio(socketio)
     register_kernel_events(socketio)
 
-# Entry point for Spore
+# Entry point
 if __name__ == "__main__":
     app = create_app()
-    logging.info(f"Spore started on host: {settings.APP_HOST}")
+    logging.info(f"Spore started on host: {settings.APP_HOST,settings.APP_PORT}")
     sys.stdout.flush()
     socketio.run(
         app,

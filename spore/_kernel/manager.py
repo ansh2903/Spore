@@ -12,7 +12,7 @@ from jupyter_client.blocking import BlockingKernelClient
 from spore._config.settings import settings
 from spore._exception import CustomException
 from spore._logger import logging
-from spore._utils import kernel_runtime, prepare_kernel_streams_volume, security_runtime
+from spore._utils import kernel_runtime, prepare_data_volume_for_kernel, kernel_cache_dir, security_runtime
 
 # ipykernel tracebacks include ANSI color codes (and occasionally HTML spans).
 _ANSI_RE = re.compile(r"\x1b\[[0-9;]*(?:;[0-9]*)*[mGKH]")
@@ -110,14 +110,28 @@ def _ensure_dind_network(client, name: str) -> str:
     return name
 
 
+# Default resolvers for notebook kernels when KERNEL_DNS is unset. Leave unset
+# to use the DinD daemon resolver (inherits host DNS via Docker).
+_DEFAULT_KERNEL_DNS: tuple[str, ...] = ()
+
+
+def _kernel_dns_servers() -> list[str]:
+    if settings.KERNEL_DNS:
+        return list(settings.KERNEL_DNS)
+    return list(_DEFAULT_KERNEL_DNS)
+
+
 def _container_network_kwargs(client) -> dict:
     """Network options for kernel containers (egress + optional DNS)."""
     if not settings.KERNEL_ALLOW_NETWORK:
         return {"network_disabled": True}
     network = _ensure_dind_network(client, settings.KERNEL_NETWORK)
     kwargs: dict = {"network": network}
-    if settings.KERNEL_DNS:
-        kwargs["dns"] = settings.KERNEL_DNS
+    dns = _kernel_dns_servers()
+    if dns:
+        kwargs["dns"] = dns
+        # Avoid router search domains (e.g. huggingface.co.bbrouter) when overriding DNS.
+        kwargs["dns_search"] = []
     return kwargs
 
 
@@ -145,7 +159,8 @@ class DockerKernel:
         logging.info("Docker kernel started: %s (%s)", self.kernel_name, self._container.short_id)
 
     def _start_container(self) -> None:
-        prepare_kernel_streams_volume(settings.KERNEL_VOLUME_BIND)
+        prepare_data_volume_for_kernel(settings.KERNEL_VOLUME_BIND)
+        cache_dir = kernel_cache_dir(settings.KERNEL_VOLUME_BIND)
         client = _docker_client()
         name = f"spore-kernel-{secrets.token_hex(6)}"
         env = {
@@ -155,6 +170,8 @@ class DockerKernel:
             "KERNEL_CONTROL_PORT": str(_KERNEL_PORTS["control"]),
             "KERNEL_HB_PORT": str(_KERNEL_PORTS["hb"]),
             "KERNEL_KEY": self._key,
+            "HF_HOME": str(cache_dir),
+            "TRANSFORMERS_CACHE": str(cache_dir),
         }
         volumes = {
             settings.KERNEL_VOLUME_BIND: {
@@ -238,6 +255,30 @@ class DockerKernel:
             except Exception:
                 continue
 
+    def _container_failure_reason(self) -> str | None:
+        """Return a user-facing reason when the kernel container is no longer running."""
+        if self._container is None:
+            return None
+        try:
+            self._container.reload()
+        except NotFound:
+            return "Kernel container was removed"
+        state = self._container.attrs.get("State") or {}
+        if state.get("Status") == "running":
+            return None
+        if state.get("OOMKilled"):
+            mem = self._security.get("mem_limit", "unknown")
+            return (
+                f"Kernel container ran out of memory (limit {mem}). "
+                "Increase memory under Settings → Kernel, then restart the kernel."
+            )
+        exit_code = state.get("ExitCode")
+        status = state.get("Status", "unknown")
+        return f"Kernel container stopped (status={status}, exit={exit_code})"
+
+    def is_healthy(self) -> bool:
+        return self._container_failure_reason() is None
+
     def execute(self, code, enforce_timeout: bool = True):
         """Yield structured output chunks as the kernel produces them."""
         msg_id = self.kc.execute(code)
@@ -263,6 +304,11 @@ class DockerKernel:
 
                     msg = self.kc.get_iopub_msg(timeout=poll_timeout)
                 except queue.Empty:
+                    failure = self._container_failure_reason()
+                    if failure:
+                        yield format_kernel_error("KernelError", failure)
+                        finished = True
+                        break
                     continue
                 except Exception as exc:
                     detail = str(exc).strip() or type(exc).__name__
@@ -338,16 +384,22 @@ class DockerKernel:
         self._inject_startup_config()
         logging.info("Kernel restarted")
 
-    def shutdown(self):
+    def shutdown(self, *, force: bool = False):
         try:
             self.kc.stop_channels()
         except Exception:
             pass
         if self._container is not None:
             try:
-                self._container.stop(timeout=5)
+                if force:
+                    self._container.kill()
+                else:
+                    self._container.stop(timeout=5)
             except Exception:
-                pass
+                try:
+                    self._container.kill()
+                except Exception:
+                    pass
             try:
                 self._container.remove(force=True)
             except NotFound:

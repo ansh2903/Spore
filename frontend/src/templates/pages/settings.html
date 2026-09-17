@@ -832,7 +832,8 @@
                         <label class="form-label-clean mb-0">Memory Limit</label>
                         <span class="font-mono text-xs font-bold text-primary" x-text="security.mem_limit_mb + ' MB'"></span>
                     </div>
-                    <input class="custom-range" type="range" min="250" max="4096" step="50" x-model.number="security.mem_limit_mb" />
+                    <input class="custom-range" type="range" min="250" max="{{ security_runtime.mem_limit_max_mb }}" step="50" x-model.number="security.mem_limit_mb" />
+                    <p class="text-[11px] text-slate-400 font-medium px-1">Per-kernel Docker memory limit. Default 4 GB; configurable up to {{ (security_runtime.mem_limit_max_mb / 1024) | int }} GB.</p>
                 </div>
 
                 <div class="space-y-3">
@@ -1015,7 +1016,7 @@
 
                 // Security Lab
                 security: {
-                    mem_limit_mb: SECURITY_RUNTIME.mem_limit_mb || 1024,
+                    mem_limit_mb: SECURITY_RUNTIME.mem_limit_mb || 4096,
                     pids_limit: SECURITY_RUNTIME.pids_limit || 256,
                     exec_timeout: SECURITY_RUNTIME.exec_timeout ?? 0,
                 },

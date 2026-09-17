@@ -68,6 +68,12 @@ Only sources registered in [`spore/_connectors/registry.py`](../spore/_connector
 - `KERNEL_DATA_MOUNT` must be the path the Jupyter kernel uses (default `/data`).
 - In Docker Compose, the `spore_volumes` named volume is mounted at `/data` on both `spore` and kernel containers.
 
+### `PermissionError` on `/data/.cache` in notebook cells
+
+The Spore app creates files on the shared volume as **root**, while Jupyter kernels run as **uid 1000**. Hugging Face / transformers writes to `HF_HOME` (`/data/.cache/huggingface` by default). If you see `Permission denied: '/data/.cache'`, restart the Spore app so volume prep runs at startup, or restart the kernel after upgrading.
+
+Open the **Files** side panel → **Model cache** zone to confirm the cache directory exists and browse downloaded models. Volume zone sizes are shown under **Workspace Volume**.
+
 ### Kernel does not start
 
 - `jupyter-client` and `docker` Python packages must be installed in the `spore` image.

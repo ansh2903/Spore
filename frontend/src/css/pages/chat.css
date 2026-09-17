@@ -77,6 +77,32 @@
     letter-spacing: -0.05em;
   }
 
+  .page-chat #volume-zones .volume-zone-row:hover {
+    background: rgb(248 250 252);
+    border-radius: 4px;
+  }
+  .page-chat #kernel-env-body .fs-pkg-badge {
+    font-size: 6px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 1px 4px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+  .page-chat #kernel-env-body .fs-pkg-badge.installed {
+    background: rgb(236 253 245);
+    color: rgb(5 150 105);
+  }
+  .page-chat #kernel-env-body .fs-pkg-badge.pending {
+    background: rgb(254 243 199);
+    color: rgb(180 83 9);
+  }
+  .page-chat #fs-zone-toggle .fs-zone-btn.active {
+    background: rgb(236 253 245);
+    color: rgb(5 150 105);
+  }
+
   .page-chat #fs-tree .fs-row {
     display: flex;
     align-items: center;

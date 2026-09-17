@@ -1,6 +1,10 @@
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeout
+
 from flask_socketio import emit
 from flask import request, session, copy_current_request_context
 from spore._kernel.store import get_kernel, destroy_kernel, kernel_generation
+
+_KERNEL_RESTART_TIMEOUT = 120
 from spore._kernel.execution_queue import clear_queue, submit_execution
 from spore._kernel.manager import format_kernel_error
 from spore._logger import logging
@@ -28,6 +32,15 @@ def register_kernel_events(socketio):
     def on_connect():
         session_id = request.sid
         logging.info(f"Client connected: {session_id}")
+        emit('kernel_status', {
+            'status': 'connected',
+            'session_id': session_id,
+            'kernel_generation': kernel_generation(),
+        })
+
+    @socketio.on('kernel_status_request')
+    def on_kernel_status_request():
+        session_id = request.sid
         emit('kernel_status', {
             'status': 'connected',
             'session_id': session_id,
@@ -61,21 +74,47 @@ def register_kernel_events(socketio):
     @socketio.on('kernel_restart')
     def on_restart(data):
         session_id = request.sid
+        payload = data or {}
+        kernel_name = payload.get('kernel_name')
         clear_queue(session_id, socketio=socketio, reason="Kernel restart")
-        destroy_kernel(session_id)
+        destroy_kernel(session_id, force=True)
         emit('kernel_status', {'status': 'restarting'})
 
         @copy_current_request_context
         def warm_start():
             try:
-                get_kernel(session_id)
+                with ThreadPoolExecutor(max_workers=1) as pool:
+                    future = pool.submit(get_kernel, session_id, kernel_name)
+                    future.result(timeout=_KERNEL_RESTART_TIMEOUT)
                 socketio.emit(
                     'kernel_status',
-                    {'status': 'restarted', 'kernel_generation': kernel_generation()},
+                    {
+                        'status': 'restarted',
+                        'kernel_generation': kernel_generation(),
+                    },
+                    to=session_id,
+                )
+            except FuturesTimeout:
+                logging.error(
+                    "Kernel restart timed out for %s after %ss",
+                    session_id,
+                    _KERNEL_RESTART_TIMEOUT,
+                )
+                destroy_kernel(session_id, force=True)
+                socketio.emit(
+                    'kernel_status',
+                    {
+                        'status': 'error',
+                        'content': (
+                            f"Kernel restart timed out after {_KERNEL_RESTART_TIMEOUT}s. "
+                            "Try again or run a cell to start a fresh kernel."
+                        ),
+                    },
                     to=session_id,
                 )
             except Exception as exc:
                 logging.error("Kernel restart failed for %s: %s", session_id, exc, exc_info=True)
+                destroy_kernel(session_id, force=True)
                 socketio.emit(
                     'kernel_status',
                     {'status': 'error', 'content': str(exc)},

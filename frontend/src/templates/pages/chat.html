@@ -188,14 +188,37 @@
                         </button>
                     </div>
 
-                    <div class="px-4 py-1.5 border-b border-slate-100 bg-slate-50/30 shrink-0">
-                        <div class="flex flex-col gap-0.5">
+                    <div class="px-4 py-2 border-b border-slate-100 bg-slate-50/30 shrink-0" id="volume-overview">
+                        <div class="flex items-center justify-between gap-2 mb-1.5">
                             <span class="text-[9px] font-medium text-slate-400 uppercase tracking-widest">Workspace Volume</span>
-                            <span id="storage-used" class="text-lg font-mono font-medium text-slate-600 tracking-tighter">0 B</span>
+                            <button type="button" onclick="loadVolumeOverview()" title="Refresh volume"
+                                class="w-5 h-5 flex items-center justify-center rounded text-slate-300 hover:text-primary transition-all">
+                                <span class="material-symbols-outlined text-[14px]">refresh</span>
+                            </button>
+                        </div>
+                        <div id="volume-zones" class="flex flex-col gap-1 max-h-[120px] overflow-y-auto scrollbar-thin">
+                            <div class="text-[8px] text-slate-400 font-bold py-1">Loading…</div>
                         </div>
                     </div>
 
-                    <div class="px-2 py-3.5 border-b border-slate-100 flex items-center gap-0.5 shrink-0" id="fs-toolbar">
+                    <details class="px-4 py-2 border-b border-slate-100 shrink-0 group" id="kernel-env-section">
+                        <summary class="flex items-center justify-between cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                            <span class="text-[9px] font-medium text-slate-400 uppercase tracking-widest">Kernel Environment</span>
+                            <span class="material-symbols-outlined text-[14px] text-slate-300 group-open:rotate-180 transition-transform">expand_more</span>
+                        </summary>
+                        <div id="kernel-env-body" class="mt-2 flex flex-col gap-1.5">
+                            <div class="text-[8px] text-slate-400 font-bold">Loading…</div>
+                        </div>
+                    </details>
+
+                    <div class="px-2 py-2 border-b border-slate-100 flex items-center gap-1 shrink-0" id="fs-zone-toggle">
+                        <button type="button" data-fs-zone="streams" onclick="fsSetZone('streams')"
+                            class="fs-zone-btn active text-[8px] font-black uppercase tracking-wider px-2 py-1 rounded-md bg-primary-soft text-primary">Streams</button>
+                        <button type="button" data-fs-zone="cache" onclick="fsSetZone('cache')"
+                            class="fs-zone-btn text-[8px] font-black uppercase tracking-wider px-2 py-1 rounded-md text-slate-400 hover:bg-slate-50">Model cache</button>
+                    </div>
+
+                    <div class="px-2 py-2 border-b border-slate-100 flex items-center gap-0.5 shrink-0" id="fs-toolbar">
                         <button type="button" onclick="fsToolbarMkdir()" title="New Folder"
                             class="w-7 h-7 flex items-center justify-center rounded-md text-slate-400 hover:text-primary hover:bg-primary-soft transition-all">
                             <span class="material-symbols-outlined text-[18px]">create_new_folder</span>
@@ -1000,7 +1023,7 @@
                                 <span class="inline-flex items-center gap-1.5 h-5 px-2 rounded-pill
                      bg-white border border-slate-200 text-[9px] font-black uppercase tracking-widest text-slate-500">
                                     <span class="material-symbols-outlined text-[12px] text-slate-400">memory</span>
-                                    Kernel <span class="font-mono text-slate-900 ml-0.5">Python {{ kernel_runtime.python_version }}</span>
+                                    Kernel <span class="font-mono text-slate-900 ml-0.5">Python {{ kernel_runtime.python_version }}</span><span id="kernel-mem-limit" class="font-mono text-slate-500 ml-0.5"></span>
                                 </span>
 
                                 <span id="kernel-status-pill" title="Kernel status"
@@ -1514,6 +1537,7 @@
 
     <script>
         window.SPORE_CONNECTIONS = {{ connections | tojson }};
+        window.SPORE_SECURITY_RUNTIME = {{ security_runtime | tojson }};
         window.SPORE_WORKSPACE = {{ workspace | tojson }};
         window.SPORE_WORKSPACE_STATE = {{ workspace_state | tojson }};
         window.SPORE_PROVIDER = {{ provider | tojson }};

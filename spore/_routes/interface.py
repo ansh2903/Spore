@@ -22,7 +22,9 @@ def _source_icons() -> dict[str, str]:
 @interface_blueprint.route('/')
 def index():
     try:
+        logging.info('nigga')
         connections = session.get('connections', [])
+        logging.info(connections)
         store = get_workspace_store()
         workspaces = store.list_workspaces()
         if not workspaces:

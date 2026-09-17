@@ -26,6 +26,8 @@ from spore._utils import (
     merge_settings_section,
     kernel_runtime,
     security_runtime,
+    kernel_mem_limit_bounds,
+    _clamp_mem_limit_mb,
     data_runtime,
     repo_root,
     file_size_fmt,
@@ -354,10 +356,11 @@ def cleanup_kernel_images():
 def save_security_settings():
     try:
         body = request.get_json(silent=True) or {}
-        mem_limit_mb = int(body.get("mem_limit_mb", 1024))
+        bounds = kernel_mem_limit_bounds()
+        mem_limit_mb = int(body.get("mem_limit_mb", bounds["default_mb"]))
         pids_limit = int(body.get("pids_limit", 256))
         exec_timeout = int(body.get("exec_timeout", 0))
-        mem_limit_mb = max(250, min(4096, mem_limit_mb))
+        mem_limit_mb = _clamp_mem_limit_mb(mem_limit_mb)
         pids_limit = max(16, min(1024, pids_limit))
         exec_timeout = max(0, min(3600, exec_timeout))
 

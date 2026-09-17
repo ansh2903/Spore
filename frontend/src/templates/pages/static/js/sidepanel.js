@@ -30,7 +30,11 @@ function openSidePanel(name) {
     panel.style.width = '220px';
     activeSidePanel = name;
 
-    if (name === 'files') loadFs();
+    if (name === 'files') {
+        loadVolumeOverview();
+        loadKernelPackages();
+        loadFs();
+    }
     if (name === 'notebook' && typeof window.loadNotebooks === 'function') loadNotebooks();
 }
 
@@ -244,6 +248,7 @@ async function refreshSchema() {
 
 // ─── File Manager (volumes/streams) ───────────────────────────
 const fsState = {
+    zone: 'streams',
     expanded: new Set(['']),
     selected: null,
     cache: new Map(),
@@ -252,6 +257,95 @@ const fsState = {
 };
 
 window.loadStreams = () => loadFs();
+
+function fsSetZone(zone) {
+    if (zone === fsState.zone) return;
+    fsState.zone = zone;
+    fsState.expanded = new Set(['']);
+    fsState.selected = null;
+    fsState.cache = new Map();
+    fsState.inlineEdit = null;
+    document.querySelectorAll('.fs-zone-btn').forEach((btn) => {
+        const active = btn.dataset.fsZone === zone;
+        btn.classList.toggle('active', active);
+        btn.classList.toggle('bg-primary-soft', active);
+        btn.classList.toggle('text-primary', active);
+        btn.classList.toggle('text-slate-400', !active);
+    });
+    const toolbar = document.getElementById('fs-toolbar');
+    if (toolbar) toolbar.style.display = zone === 'cache' ? 'none' : '';
+    loadFs();
+}
+
+async function loadVolumeOverview() {
+    const container = document.getElementById('volume-zones');
+    if (!container) return;
+    try {
+        const res = await fetch('/api/volume/overview');
+        if (!res.ok) throw new Error('Failed to load volume');
+        const data = await res.json();
+        const zones = data.zones || [];
+        if (!zones.length) {
+            container.innerHTML = '<div class="text-[8px] text-slate-400 font-bold">No zones</div>';
+            return;
+        }
+        container.innerHTML = zones.map((z) => `
+            <div class="volume-zone-row flex items-start justify-between gap-2 py-0.5" title="${fsEscapeHtml(z.purpose || z.label)}">
+                <div class="min-w-0 flex-1">
+                    <div class="text-[8px] font-bold text-slate-600 truncate">${fsEscapeHtml(z.label)}</div>
+                    <div class="text-[7px] font-mono text-slate-400 truncate">${fsEscapeHtml(z.kernel_path || '')}</div>
+                </div>
+                <span class="text-[8px] font-mono text-slate-500 shrink-0">${fsEscapeHtml(z.size_pretty || '0 B')}</span>
+            </div>`).join('');
+    } catch (e) {
+        container.innerHTML = `<div class="text-[8px] text-red-400 font-bold">${fsEscapeHtml(e.message)}</div>`;
+    }
+}
+
+async function loadKernelPackages() {
+    const body = document.getElementById('kernel-env-body');
+    if (!body) return;
+    try {
+        const [pkgRes, volRes] = await Promise.all([
+            fetch('/settings/kernel/packages'),
+            fetch('/api/volume/overview'),
+        ]);
+        if (!pkgRes.ok) throw new Error('Failed to load packages');
+        const pkgData = await pkgRes.json();
+        const volData = volRes.ok ? await volRes.json() : {};
+        const kernel = volData.kernel || {};
+        const mem = kernel.mem_limit || `${kernel.mem_limit_mb || '?'} MB`;
+        const packages = (pkgData.packages || []).filter((p) => p.managed);
+        const managed = packages.length ? packages : (pkgData.packages || []).slice(0, 12);
+
+        let pkgHtml = '';
+        if (!managed.length) {
+            pkgHtml = '<div class="text-[8px] text-slate-400">No pinned packages</div>';
+        } else {
+            pkgHtml = managed.map((p) => {
+                const badge = p.installed
+                    ? '<span class="fs-pkg-badge installed">installed</span>'
+                    : '<span class="fs-pkg-badge pending">pending rebuild</span>';
+                const ver = p.pinned || p.version || '';
+                return `<div class="flex items-center justify-between gap-1 py-0.5">
+                    <span class="text-[8px] font-mono text-slate-600 truncate" title="${fsEscapeHtml(p.name)}">${fsEscapeHtml(p.name)}</span>
+                    <span class="flex items-center gap-1 shrink-0">
+                        ${ver ? `<span class="text-[7px] text-slate-400">${fsEscapeHtml(ver)}</span>` : ''}
+                        ${badge}
+                    </span>
+                </div>`;
+            }).join('');
+        }
+
+        body.innerHTML = `
+            <div class="text-[8px] text-slate-500 font-mono truncate" title="${fsEscapeHtml(pkgData.image || '')}">${fsEscapeHtml(pkgData.image || kernel.image || '—')}</div>
+            <div class="text-[8px] text-slate-400">Python ${fsEscapeHtml(kernel.python_version || '—')} · ${fsEscapeHtml(mem)}</div>
+            <div class="max-h-[100px] overflow-y-auto scrollbar-thin mt-1">${pkgHtml}</div>
+            <div class="text-[7px] text-slate-400 mt-1 leading-snug">Pinned packages require image rebuild from Settings.</div>`;
+    } catch (e) {
+        body.innerHTML = `<div class="text-[8px] text-red-400 font-bold">${fsEscapeHtml(e.message)}</div>`;
+    }
+}
 
 function fsSetStatus(msg) {
     const el = document.getElementById('fs-status');
@@ -280,9 +374,18 @@ function fmtSize(b) {
     return `${(b / 1024 ** 3).toFixed(2)} GB`;
 }
 
-function fsFileIcon(name) {
+function fsFileIcon(name, zone) {
     if (name === 'working.parquet') return { icon: 'terminal', cls: 'text-indigo-400' };
     const ext = (name.split('.').pop() || '').toLowerCase();
+    if (zone === 'cache') {
+        if (['bin', 'safetensors', 'pt', 'pth', 'onnx', 'msgpack'].includes(ext)) {
+            return { icon: 'model_training', cls: 'text-violet-400' };
+        }
+        if (['json', 'txt', 'md'].includes(ext)) {
+            return { icon: 'description', cls: 'text-slate-300' };
+        }
+        return { icon: 'inventory_2', cls: 'text-slate-300' };
+    }
     if (['parquet', 'csv', 'tsv', 'json', 'xlsx', 'xls'].includes(ext)) {
         return { icon: 'database', cls: 'text-slate-300' };
     }
@@ -298,7 +401,10 @@ function fsEscapeHtml(s) {
 }
 
 async function fsFetchList(dirPath) {
-    const q = dirPath ? `?path=${encodeURIComponent(dirPath)}` : '';
+    const params = new URLSearchParams();
+    if (fsState.zone && fsState.zone !== 'streams') params.set('zone', fsState.zone);
+    if (dirPath) params.set('path', dirPath);
+    const q = params.toString() ? `?${params}` : '';
     const res = await fetch(`/api/fs/list${q}`);
     if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -308,8 +414,6 @@ async function fsFetchList(dirPath) {
     fsState.cache.set(dirPath, data.entries);
     if (dirPath === '') {
         fsState.totalPretty = data.total_pretty || fmtSize(data.total_bytes || 0);
-        const storage = document.getElementById('storage-used');
-        if (storage) storage.textContent = fsState.totalPretty;
     }
     return data;
 }
@@ -336,10 +440,11 @@ function renderTree() {
     if (!tree) return;
     const rootEntries = fsState.cache.get('') || [];
     if (!rootEntries.length && !fsState.inlineEdit) {
+        const emptyLabel = fsState.zone === 'cache' ? 'No cached models' : 'Empty workspace';
         tree.innerHTML = `
             <div class="flex flex-col items-center justify-center py-12 opacity-40">
                 <span class="material-symbols-outlined text-[32px] mb-2">folder_off</span>
-                <span class="text-[10px] font-medium">Empty workspace</span>
+                <span class="text-[10px] font-medium">${emptyLabel}</span>
             </div>`;
         return;
     }
@@ -371,7 +476,7 @@ function renderEntryRow(entry, depth) {
     const pad = 4 + depth * 4;
     const { icon, cls } = isDir
         ? { icon: expanded ? 'folder_open' : 'folder', cls: 'text-slate-400' }
-        : fsFileIcon(entry.name);
+        : fsFileIcon(entry.name, fsState.zone);
     const chevron = isDir
         ? `<span class="material-symbols-outlined fs-chevron text-[16px] text-slate-400 ${expanded ? 'expanded' : ''}">chevron_right</span>`
         : `<span class="fs-chevron"></span>`;

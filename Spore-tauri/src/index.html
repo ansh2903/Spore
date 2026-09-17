@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Spore Tauri Test</title>
+</head>
+
+<body>
+
+    <h1>Spore</h1>
+
+    <button id="test">Talk to Flask</button>
+
+    <pre id="output"></pre>
+
+    <script>
+        document.getElementById("test").addEventListener("click", async () => {
+
+            const response = await fetch(
+                "http://127.0.0.1:5001"
+            );
+
+            const data = await response.json();
+
+            document.getElementById("output").textContent =
+                JSON.stringify(data, null, 2);
+        });
+    </script>
+
+</body>
+</html>

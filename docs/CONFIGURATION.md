@@ -24,7 +24,8 @@ Copy [.env.example](../.env.example) to `.env` at the repository root.
 | `KERNEL_HOST` | `kernel-dind` | Hostname of the DinD daemon (ZMQ client target). |
 | `KERNEL_VOLUME_BIND` | `/data` | Bind source inside DinD for the shared data volume. |
 | `DOCKER_HOST` | _(empty)_ | Docker API URL (`tcp://kernel-dind:2375` in compose). |
-| `KERNEL_MEM_LIMIT` | `1g` | Memory limit per kernel container. |
+| `KERNEL_MEM_LIMIT` | `4g` | Default memory limit per kernel container (overridable in Settings). |
+| `KERNEL_MEM_LIMIT_MAX_MB` | `131072` | Maximum per-kernel memory (MB) allowed in Settings UI and API (128 GB). |
 | `KERNEL_PIDS_LIMIT` | `256` | Process limit per kernel container. |
 | `OLLAMA_BASE` | `http://localhost:11434` | Ollama API base URL. |
 | `OLLAMA_ENDPOINT` | `http://localhost:11434/api/generate` | Legacy Ollama generate endpoint. |

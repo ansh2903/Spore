@@ -1,28 +1,35 @@
 ''' Basic settings and configurations for the application.'''
 
+from pathlib import Path
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
+basedir = Path(__file__).parents[2]
+
+raw_origins = os.getenv("ALLOWED_ORIGINS", "http://127.0.0.1:5000,http://localhost:5000,http://localhost:5001,http://127.0.0.1:5001")
+
 class Settings:
-    SECRET_KEY = os.getenv("SECRET_KEY", "spore_secret_key")
-    SQLALCHEMY_URI = os.getenv("SQLALCHEMY_URI")
+    APP_HOST = os.getenv("APP_HOST", "127.0.0.1")
+    APP_PORT = int(os.getenv("APP_PORT", 5001))
+    ALLOWED_ORIGINS = [origin.strip() for origin in raw_origins.split(",")]
     DEBUG = os.getenv("DEBUG", "True") == "True"
+
+    SECRET_KEY = os.getenv("SECRET_KEY", "spore_secret_key")
+
+    SQLALCHEMY_URI = os.getenv("SQLALCHEMY_URI")
 
     OLLAMA_ENDPOINT = os.getenv("OLLAMA_ENDPOINT", "http://localhost:11434")
     LMSTUDIO_ENDPOINT = os.getenv("LMSTUDIO_ENDPOINT", "http://localhost:1234")
     DEFAULT_MODEL = os.getenv("OLLAMA_LLM")
-    
-    APP_HOST = os.getenv("APP_HOST", "127.0.0.1")
-    APP_PORT = int(os.getenv("APP_PORT", 5000))
-    
-    REDIS_HOST = os.getenv("REDIS_HOST", "127.0.0.1")
-    REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
-    REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", None)
-    
+
+    # Make sure to deal with this string based directory approach, this will work with linux and 
+    # Docker but it will choke on itself on windows and mac.
+    SESSION_SQLITE_PATH = 'sqlite:///' + os.path.join(basedir ,os.getenv("SESSION_SQLITE_PATH", "volumes/sessions.db"))
+    WORKSPACE_DB_PATH = os.getenv("WORKSPACE_DB_PATH", "volumes/workspaces.db")
     # Host path where materialized data lands (Flask / ingest)
-    SPORE_DATA_DIR = os.getenv("SPORE_DATA_DIR", "/data")
+    SPORE_DATA_DIR = os.path.join(basedir ,os.getenv("SPORE_DATA_DIR", "/volumes"))
 
     # Path visible inside the sandboxed Jupyter kernel container
     KERNEL_DATA_MOUNT = os.getenv("KERNEL_DATA_MOUNT", "/data")
@@ -43,7 +50,8 @@ class Settings:
     KERNEL_DNS = [s.strip() for s in _kernel_dns_raw.split(",") if s.strip()]
     KERNEL_VOLUME = os.getenv("KERNEL_VOLUME", "spore_volumes")
     DOCKER_HOST = os.getenv("DOCKER_HOST", "")
-    KERNEL_MEM_LIMIT = os.getenv("KERNEL_MEM_LIMIT", "1g")
+    KERNEL_MEM_LIMIT = os.getenv("KERNEL_MEM_LIMIT", "4g")
+    KERNEL_MEM_LIMIT_MAX_MB = int(os.getenv("KERNEL_MEM_LIMIT_MAX_MB", "131072"))
     KERNEL_PIDS_LIMIT = int(os.getenv("KERNEL_PIDS_LIMIT", "256"))
 
     # Optional host metrics bridge for Docker Desktop (Windows/macOS) deployments.
@@ -58,9 +66,6 @@ class Settings:
 
 
 settings = Settings()
-
-raw_origins = os.getenv("ALLOWED_ORIGINS", "http://127.0.0.1:5000,http://localhost:5000")
-ALLOWED_ORIGINS = [origin.strip() for origin in raw_origins.split(",")]
 
 # Default base URLs per LLM provider. Environment variables override the
 # built-in defaults; users can further override each one at runtime through the

@@ -172,7 +172,36 @@ function cellDragHandleHtml(cellId) {
 }
 
 const SPORE_CONNECTIONS = window.SPORE_CONNECTIONS || [];
+const SPORE_SECURITY_RUNTIME = window.SPORE_SECURITY_RUNTIME || { mem_limit_mb: 4096 };
 const socket = window.sporeSocket || (window.sporeSocket = io({ reconnection: true }));
+
+function formatMemLimitMb(mb) {
+  const n = Number(mb);
+  if (!Number.isFinite(n) || n <= 0) return '';
+  if (n >= 1024) {
+    const gb = n / 1024;
+    return Number.isInteger(gb) ? `${gb} GB` : `${gb.toFixed(1)} GB`;
+  }
+  return `${Math.round(n)} MB`;
+}
+
+function kernelMemLimitLabel() {
+  return formatMemLimitMb(SPORE_SECURITY_RUNTIME.mem_limit_mb);
+}
+
+function kernelStatusTooltip(stateLabel, detail) {
+  const parts = [stateLabel];
+  const mem = kernelMemLimitLabel();
+  if (mem) parts.push(`${mem} limit`);
+  if (detail) parts.push(detail);
+  return parts.join(' · ');
+}
+
+function renderKernelMemLimitPill() {
+  const el = document.getElementById('kernel-mem-limit');
+  const mem = kernelMemLimitLabel();
+  if (el && mem) el.textContent = `· ${mem}`;
+}
 
 const KERNEL_STATUS_CONFIG = {
   connecting:   { label: 'Connecting',   dot: 'bg-amber-400 animate-pulse', text: 'text-amber-600' },
@@ -203,7 +232,7 @@ function applyKernelStatusPill(state, tooltip) {
     text.textContent = cfg.label;
     text.className = `font-mono ${cfg.text}`;
   }
-  if (pill) pill.title = tooltip || cfg.label;
+  if (pill) pill.title = tooltip || kernelStatusTooltip(cfg.label);
 }
 
 function refreshKernelStatus() {
@@ -214,7 +243,7 @@ function refreshKernelStatus() {
   }
   if (kernelStatusState.error) {
     const detail = kernelStatusState.errorDetail;
-    applyKernelStatusPill('error', detail || 'Kernel error');
+    applyKernelStatusPill('error', kernelStatusTooltip('Error', detail || 'Kernel error'));
     return;
   }
   if (kernelStatusState.restarting) {
@@ -225,15 +254,20 @@ function refreshKernelStatus() {
     applyKernelStatusPill('interrupted');
     return;
   }
-  if (!kernelStatusState.kernelReady) {
-    applyKernelStatusPill('connecting');
-    return;
-  }
   if (kernelPendingCount > 0 || runAllInProgress) {
     applyKernelStatusPill('busy');
     return;
   }
+  if (!kernelStatusState.kernelReady) {
+    applyKernelStatusPill('connecting');
+    return;
+  }
   applyKernelStatusPill('idle');
+}
+
+function requestKernelStatus() {
+  if (!socket.connected) return;
+  socket.emit('kernel_status_request');
 }
 
 function setKernelStatus(state) {
@@ -286,6 +320,28 @@ function waitForKernelCell(cellId) {
   });
 }
 
+let kernelRestartWatchdog = null;
+const KERNEL_RESTART_TIMEOUT_MS = 130_000;
+
+function clearKernelRestartWatchdog() {
+  if (kernelRestartWatchdog != null) {
+    clearTimeout(kernelRestartWatchdog);
+    kernelRestartWatchdog = null;
+  }
+}
+
+function startKernelRestartWatchdog() {
+  clearKernelRestartWatchdog();
+  kernelRestartWatchdog = setTimeout(() => {
+    kernelRestartWatchdog = null;
+    if (!kernelStatusState.restarting) return;
+    kernelStatusState.restarting = false;
+    stopRestartSpinner();
+    requestKernelStatus();
+    setKernelError('Kernel restart timed out. Run a cell or try restart again.');
+  }, KERNEL_RESTART_TIMEOUT_MS);
+}
+
 function stopRestartSpinner() {
   const icon = document.getElementById('restart-kernel-icon');
   if (icon) icon.classList.remove('animate-spin');
@@ -323,6 +379,7 @@ function resetKernelExecutionState() {
   }
   kernelPendingCount = 0;
   runAllInProgress = false;
+  clearKernelRestartWatchdog();
   stopRestartSpinner();
   kernelStatusState.restarting = false;
   clearKernelError();
@@ -331,8 +388,10 @@ function resetKernelExecutionState() {
 
 kernelStatusState.socketConnected = false;
 kernelStatusState.kernelReady = false;
+renderKernelMemLimitPill();
 if (socket.connected) {
   kernelStatusState.socketConnected = true;
+  requestKernelStatus();
 }
 refreshKernelStatus();
 
@@ -340,16 +399,25 @@ window.addEventListener('pagehide', () => {
   if (socket.connected) socket.disconnect();
 });
 window.addEventListener('pageshow', () => {
+  clearKernelRestartWatchdog();
+  kernelStatusState.restarting = false;
+  stopRestartSpinner();
   if (!socket.connected) socket.connect();
+  else requestKernelStatus();
+  refreshKernelStatus();
 });
 
 socket.on('connect', () => {
   console.log('Kernel socket connected');
+  clearKernelRestartWatchdog();
   kernelStatusState.socketConnected = true;
   kernelStatusState.kernelReady = false;
+  kernelStatusState.restarting = false;
+  requestKernelStatus();
   refreshKernelStatus();
 });
 socket.on('disconnect', () => {
+  clearKernelRestartWatchdog();
   stopRestartSpinner();
   kernelStatusState.socketConnected = false;
   kernelStatusState.kernelReady = false;
@@ -360,6 +428,7 @@ socket.on('kernel_status', (data) => {
   switch (data && data.status) {
     case 'connected':
       if (data.kernel_generation != null) syncKernelGeneration(data.kernel_generation);
+      clearKernelRestartWatchdog();
       stopRestartSpinner();
       kernelStatusState.kernelReady = true;
       kernelStatusState.restarting = false;
@@ -368,6 +437,7 @@ socket.on('kernel_status', (data) => {
       break;
     case 'restarted':
       if (data.kernel_generation != null) syncKernelGeneration(data.kernel_generation);
+      clearKernelRestartWatchdog();
       stopRestartSpinner();
       kernelStatusState.kernelReady = true;
       kernelStatusState.restarting = false;
@@ -376,6 +446,7 @@ socket.on('kernel_status', (data) => {
       break;
     case 'restarting':
       kernelStatusState.restarting = true;
+      startKernelRestartWatchdog();
       refreshKernelStatus();
       break;
     case 'invalidated':
@@ -393,12 +464,15 @@ socket.on('kernel_status', (data) => {
       }, 1200);
       break;
     case 'busy':
+      kernelStatusState.kernelReady = true;
       refreshKernelStatus();
       break;
     case 'idle':
+      kernelStatusState.kernelReady = true;
       refreshKernelStatus();
       break;
     case 'error':
+      clearKernelRestartWatchdog();
       stopRestartSpinner();
       kernelStatusState.restarting = false;
       setKernelError(data.content || 'Kernel error');
@@ -426,6 +500,7 @@ function restartKernel(kernelName = 'python3') {
   socket.emit('kernel_restart', { kernel_name: kernelName });
   kernelStatusState.restarting = true;
   clearKernelError();
+  startKernelRestartWatchdog();
   refreshKernelStatus();
   const icon = document.getElementById('restart-kernel-icon');
   if (icon) icon.classList.add('animate-spin');
@@ -1399,6 +1474,10 @@ function recordCellOutput(cell, chunk) {
 }
 
 function handleKernelOutput(chunk) {
+  if (!kernelStatusState.kernelReady) {
+    kernelStatusState.kernelReady = true;
+    refreshKernelStatus();
+  }
   const cell = cells[chunk.cell_id];
   if (!cell) return;
   const out = cell.outputEl;

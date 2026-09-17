@@ -60,6 +60,14 @@ def invalidate_kernels(reason: str = "config_changed") -> int:
 
 def get_kernel(session_id, kernel_name=None):
     with _lock:
+        existing = _kernels.get(session_id)
+        logging.info(existing)
+        if existing is not None and not existing.is_healthy():
+            try:
+                existing.shutdown(force=True)
+            except Exception:
+                pass
+            del _kernels[session_id]
         if session_id not in _kernels:
             runtime = kernel_runtime()
             _kernels[session_id] = DockerKernel(
@@ -69,8 +77,8 @@ def get_kernel(session_id, kernel_name=None):
             )
         return _kernels[session_id]
     
-def destroy_kernel(session_id):
+def destroy_kernel(session_id, *, force: bool = False):
     with _lock:
         if session_id in _kernels:
-            _kernels[session_id].shutdown()
+            _kernels[session_id].shutdown(force=force)
             del _kernels[session_id]

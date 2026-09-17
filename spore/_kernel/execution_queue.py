@@ -16,6 +16,7 @@ class _SessionQueue:
         self._pending: deque[tuple[str | None, str]] = deque()
         self._lock = threading.Lock()
         self._draining = False
+        self._aborted = False
         self._current_cell_id: str | None = None
 
     def submit(self, socketio, cell_id, code, run_fn):
@@ -36,6 +37,10 @@ class _SessionQueue:
     def _drain(self, socketio, run_fn):
         while True:
             with self._lock:
+                if self._aborted:
+                    self._draining = False
+                    self._current_cell_id = None
+                    return
                 if not self._pending:
                     self._draining = False
                     self._current_cell_id = None
@@ -66,9 +71,16 @@ class _SessionQueue:
                     to=self.session_id,
                 )
 
+            with self._lock:
+                if self._aborted:
+                    self._draining = False
+                    self._current_cell_id = None
+                    return
+
     def clear(self, socketio=None, reason: str = "cancelled"):
         in_flight = None
         with self._lock:
+            self._aborted = True
             in_flight = self._current_cell_id
             self._pending.clear()
             self._current_cell_id = None

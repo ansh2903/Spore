@@ -193,6 +193,22 @@ def _format_mem_limit_mb(mb: int) -> str:
     return f"{int(mb)}m"
 
 
+def kernel_mem_limit_bounds() -> dict:
+    """Min/default/max per-kernel memory (MB) for UI and validation."""
+    from spore._config.settings import settings as env
+
+    return {
+        "min_mb": 250,
+        "max_mb": env.KERNEL_MEM_LIMIT_MAX_MB,
+        "default_mb": _parse_mem_limit_mb(env.KERNEL_MEM_LIMIT),
+    }
+
+
+def _clamp_mem_limit_mb(mb: int) -> int:
+    bounds = kernel_mem_limit_bounds()
+    return max(bounds["min_mb"], min(bounds["max_mb"], int(mb)))
+
+
 def _kernel_image_for_version(base_image: str, python_version: str) -> str:
     """Return *base_image* with its tag replaced by *python_version*.
 
@@ -252,14 +268,16 @@ def security_runtime(settings_data: dict | None = None) -> dict:
     """Effective sandbox limits: settings.json overrides env defaults."""
     from spore._config.settings import settings as env
 
+    bounds = kernel_mem_limit_bounds()
     data = settings_data if settings_data is not None else (load_settings() or {})
     security = data.get("security") or {}
-    default_mb = _parse_mem_limit_mb(env.KERNEL_MEM_LIMIT)
-    mem_limit_mb = int(security.get("mem_limit_mb", default_mb))
+    default_mb = bounds["default_mb"]
+    mem_limit_mb = _clamp_mem_limit_mb(int(security.get("mem_limit_mb", default_mb)))
     pids_limit = int(security.get("pids_limit", env.KERNEL_PIDS_LIMIT))
     exec_timeout = int(security.get("exec_timeout", 0))
     return {
         "mem_limit_mb": mem_limit_mb,
+        "mem_limit_max_mb": bounds["max_mb"],
         "mem_limit": _format_mem_limit_mb(mem_limit_mb),
         "pids_limit": pids_limit,
         "exec_timeout": exec_timeout,
@@ -336,19 +354,59 @@ def notebooks_dir(data_dir: str | None = None) -> Path:
     return ensure_kernel_writable_path(Path(base) / "notebooks", is_dir=True)
 
 
-def prepare_kernel_streams_volume(data_dir: str | None = None) -> Path:
-    """Ensure the whole streams tree is writable by the kernel before launch.
+def kernel_cache_dir(data_dir: str | None = None) -> Path:
+    """Return Hugging Face / transformers cache dir, writable by the kernel."""
+    base = data_dir if data_dir is not None else data_runtime()["data_dir"]
+    ensure_kernel_writable_path(Path(base) / ".cache", is_dir=True)
+    return ensure_kernel_writable_path(Path(base) / ".cache" / "huggingface", is_dir=True)
 
-    Walks every directory and file so kernels can both create new files and
-    overwrite data materialized by the app (written as a different uid).
-    """
-    root = streams_dir(data_dir)
+
+def _walk_kernel_writable_tree(root: Path) -> None:
     for current, dirnames, filenames in os.walk(root):
         for name in dirnames:
             ensure_kernel_writable_path(os.path.join(current, name), is_dir=True)
         for name in filenames:
             ensure_kernel_writable_path(os.path.join(current, name), is_dir=False)
-    return root
+
+
+def prepare_data_volume_for_kernel(data_dir: str | None = None) -> dict[str, Path]:
+    """Ensure shared data volume paths are writable by sandbox kernels (uid 1000)."""
+    base = Path(data_dir if data_dir is not None else data_runtime()["data_dir"])
+    logging.info(base)
+    streams = streams_dir(str(base))
+    notebooks = notebooks_dir(str(base))
+    cache = kernel_cache_dir(str(base))
+    _walk_kernel_writable_tree(streams)
+    return {
+        "data_dir": base,
+        "streams": streams,
+        "notebooks": notebooks,
+        "hf_cache": cache,
+    }
+
+
+def prepare_kernel_streams_volume(data_dir: str | None = None) -> Path:
+    """Ensure the whole streams tree is writable by the kernel before launch."""
+    return prepare_data_volume_for_kernel(data_dir)["streams"]
+
+
+def dir_size_bytes(path: Path) -> int:
+    """Total byte size of a file or directory tree."""
+    if not path.exists():
+        return 0
+    if path.is_file():
+        try:
+            return path.stat().st_size
+        except OSError:
+            return 0
+    total = 0
+    for dirpath, _dirnames, filenames in os.walk(path):
+        for name in filenames:
+            try:
+                total += os.path.getsize(os.path.join(dirpath, name))
+            except OSError:
+                continue
+    return total
 
 
 def repo_root() -> Path:
