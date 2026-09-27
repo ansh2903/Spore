@@ -20,9 +20,11 @@ class Settings:
 
     SQLALCHEMY_URI = os.getenv("SQLALCHEMY_URI")
 
+    # For docker/Native runtime detection
+    DETECT_CONTAINER = os.getenv("DETECT_CONTAINER", False).lower() == "true"
+
     OLLAMA_ENDPOINT = os.getenv("OLLAMA_ENDPOINT", "http://localhost:11434")
     LMSTUDIO_ENDPOINT = os.getenv("LMSTUDIO_ENDPOINT", "http://localhost:1234")
-    DEFAULT_MODEL = os.getenv("OLLAMA_LLM")
 
     # Make sure to deal with this string based directory approach, this will work with linux and 
     # Docker but it will choke on itself on windows and mac.
@@ -41,7 +43,7 @@ class Settings:
         f"spore-kernel:{os.getenv('KERNEL_PYTHON_VERSION', '3.12')}",
     )
     KERNEL_HOST = os.getenv("KERNEL_HOST", "kernel-dind")
-    KERNEL_VOLUME_BIND = os.getenv("KERNEL_VOLUME_BIND", "/data")
+    KERNEL_VOLUME_BIND = os.getenv("KERNEL_VOLUME_BIND", "/volumes")
     KERNEL_NETWORK = os.getenv("KERNEL_NETWORK", "kernel_net")
     KERNEL_ALLOW_NETWORK = os.getenv("KERNEL_ALLOW_NETWORK", "true").strip().lower() in (
         "1", "true", "yes", "on",

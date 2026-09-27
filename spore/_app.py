@@ -4,6 +4,7 @@ from flask_socketio import SocketIO
 from flask_sqlalchemy import SQLAlchemy
 
 from spore._kernel.socket_events import register_kernel_events
+from spore._runtime.runnable_instance import runtime_instance
 from spore._config.settings import settings
 from spore._utils import prepare_data_volume_for_kernel
 
@@ -25,17 +26,22 @@ def create_app() -> Flask:
                     static_folder=static_path, 
                     static_url_path='/static')
         app.secret_key = settings.SECRET_KEY
-    
+
         configure_extensions(app)
         register_blueprints(app)
         register_sockets(app)
+
+        runtime_env = runtime_instance()
+
+        logging.info(f"Runtime instance detected: {runtime_env.platform}")
+        logging.info(f"Container: {runtime_env._detect_container()}")
 
         try:
             logging.info(settings.SPORE_DATA_DIR)
             prepare_data_volume_for_kernel(settings.SPORE_DATA_DIR)
         except OSError as exc:
             logging.warning("Data volume prep failed at startup: %s", exc)
-
+        
         return app
 
     except Exception as e:
@@ -44,8 +50,7 @@ def create_app() -> Flask:
 
 def configure_extensions(app: Flask) -> None:
     try:
-        logging.info(f"Session DB Path: {settings.SESSION_SQLITE_PATH}")
-
+        logging.info("Configuring app")
         app.config["SQLALCHEMY_DATABASE_URI"] = settings.SESSION_SQLITE_PATH
         app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
         app.config['SESSION_TYPE'] = 'sqlalchemy'
@@ -97,6 +102,7 @@ def register_sockets(app: Flask) -> None:
 if __name__ == "__main__":
     app = create_app()
     logging.info(f"Spore started on host: {settings.APP_HOST,settings.APP_PORT}")
+    
     sys.stdout.flush()
     socketio.run(
         app,
